@@ -1,0 +1,15 @@
+data/brutos/*
+!data/brutos/README.md
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vscode/
+.ipynb_checkpoints/
+.DS_Store
