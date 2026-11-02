@@ -1,0 +1,5 @@
+geopandas
+networkx
+osmnx
+scikit-learn
+streamlit
