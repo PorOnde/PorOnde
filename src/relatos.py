@@ -439,20 +439,39 @@ def atualizar_status():
                 [(id_relato,) for id_relato in ids_ativar],
             )
 
-    return sorted(ids_ativar)
+    with conectar() as conexao:
+        linhas = conexao.execute(
+            """
+            SELECT status, COUNT(*) AS quantidade
+            FROM relatos
+            GROUP BY status
+            """
+        ).fetchall()
 
-def votar_relato(id_relato, id_sessao, voto):
+    contagens = {
+        "pendente": 0,
+        "ativo": 0,
+        "rejeitado": 0,
+        "expirado": 0,
+    }
+
+    for linha in linhas:
+        contagens[linha["status"]] = linha["quantidade"]
+
+    return contagens
+
+def votar(id_relato, voto, id_sessao):
     try:
         id_relato = int(id_relato)
         voto = int(voto)
     except (TypeError, ValueError):
-        return "Relato ou voto inválido."
+        return False
 
     if voto not in (1, -1):
-        return "O voto deve ser 1 para confirmar ou -1 para rejeitar."
+        return False
 
     if not id_sessao:
-        return "Sessão inválida."
+        return False
 
     atualizar_status()
 
@@ -467,10 +486,10 @@ def votar_relato(id_relato, id_sessao, voto):
         ).fetchone()
 
         if relato is None:
-            return "Relato não encontrado."
+            return False
 
         if relato["status"] not in ("pendente", "ativo"):
-            return "Esse relato não pode mais receber votos."
+            return False
 
         voto_existente = conexao.execute(
             """
@@ -482,7 +501,7 @@ def votar_relato(id_relato, id_sessao, voto):
         ).fetchone()
 
         if voto_existente is not None:
-            return "Esta sessão já votou nesse relato."
+            return False
 
         conexao.execute(
             """
@@ -518,4 +537,4 @@ def votar_relato(id_relato, id_sessao, voto):
 
     atualizar_status()
 
-    return "Voto registrado."
+    return True

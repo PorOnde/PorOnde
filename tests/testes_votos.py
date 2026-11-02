@@ -14,19 +14,19 @@ def executar_teste():
         id_confirmar = int(alertas.iloc[0]["id"])
         id_rejeitar = int(alertas.iloc[1]["id"])
 
-        resposta = relatos.votar_relato(
+        voto_aceito = relatos.votar(
             id_confirmar,
-            "sessao_confirmacao",
             1,
+            "sessao_confirmacao",
         )
-        assert resposta == "Voto registrado."
+        assert voto_aceito is True
 
-        resposta_repetida = relatos.votar_relato(
+        voto_repetido = relatos.votar(
             id_confirmar,
-            "sessao_confirmacao",
             1,
+            "sessao_confirmacao",
         )
-        assert resposta_repetida == "Esta sessão já votou nesse relato."
+        assert voto_repetido is False
 
         with relatos.conectar() as conexao:
             relato_confirmado = conexao.execute(
@@ -40,12 +40,12 @@ def executar_teste():
 
         assert relato_confirmado["confirmacoes"] == 1
 
-        resposta = relatos.votar_relato(
+        voto_aceito = relatos.votar(
             id_rejeitar,
-            "sessao_rejeicao",
             -1,
+            "sessao_rejeicao",
         )
-        assert resposta == "Voto registrado."
+        assert voto_aceito is True
 
         with relatos.conectar() as conexao:
             relato_rejeitado = conexao.execute(
