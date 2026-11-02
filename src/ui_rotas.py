@@ -9,17 +9,17 @@ if str(RAIZ_PROJETO) not in sys.path:
 import pydeck as pdk
 import streamlit as st
 
-from src.config import BBOX_VM
-from src.rotas import calcular_rota, coordenadas_da_rota
-
+from src.rotas import (
+    calcular_rota,
+    coordenadas_da_rota,
+    localizar_endereco,
+)
 
 st.set_page_config(
     page_title="PorOnde? | Rotas",
     page_icon="🧭",
     layout="wide",
 )
-
-sul, norte, oeste, leste = BBOX_VM
 
 st.title("PorOnde?")
 st.caption(
@@ -34,57 +34,43 @@ with st.form("form_rota"):
 
     with coluna_origem:
         st.markdown("**Origem**")
-        latitude_origem = st.number_input(
-            "Latitude da origem",
-            min_value=sul,
-            max_value=norte,
-            value=-23.583690,
-            format="%.6f",
-        )
-        longitude_origem = st.number_input(
-            "Longitude da origem",
-            min_value=oeste,
-            max_value=leste,
-            value=-46.633915,
-            format="%.6f",
+        endereco_origem = st.text_input(
+            "Endereço de origem",
+            placeholder="Ex.: Estação Vila Mariana",
         )
 
     with coluna_destino:
         st.markdown("**Destino**")
-        latitude_destino = st.number_input(
-            "Latitude do destino",
-            min_value=sul,
-            max_value=norte,
-            value=-23.590000,
-            format="%.6f",
-        )
-        longitude_destino = st.number_input(
-            "Longitude do destino",
-            min_value=oeste,
-            max_value=leste,
-            value=-46.640000,
-            format="%.6f",
+        endereco_destino = st.text_input(
+            "Endereço de destino",
+            placeholder="Ex.: Rua Domingos de Morais, 2564",
         )
 
     calcular = st.form_submit_button("Calcular rota")
 
 if calcular:
-    try:
-        rota = calcular_rota(
-            latitude_origem,
-            longitude_origem,
-            latitude_destino,
-            longitude_destino,
-        )
+    if not endereco_origem or not endereco_destino:
+        st.warning("Preencha origem e destino antes de calcular.")
+    else:
+        try:
+            latitude_origem, longitude_origem = localizar_endereco(endereco_origem)
+            latitude_destino, longitude_destino = localizar_endereco(endereco_destino)
 
-        rota["coordenadas"] = coordenadas_da_rota(rota["nos"])
-        rota["origem"] = [longitude_origem, latitude_origem]
-        rota["destino"] = [longitude_destino, latitude_destino]
+            rota = calcular_rota(
+                latitude_origem,
+                longitude_origem,
+                latitude_destino,
+                longitude_destino,
+            )
 
-        st.session_state["rota"] = rota
+            rota["coordenadas"] = coordenadas_da_rota(rota["nos"])
+            rota["origem"] = [longitude_origem, latitude_origem]
+            rota["destino"] = [longitude_destino, latitude_destino]
 
-    except ValueError as erro:
-        st.error(str(erro))
+            st.session_state["rota"] = rota
+
+        except ValueError as erro:
+            st.error(str(erro))
 
 if "rota" in st.session_state:
     rota = st.session_state["rota"]
@@ -96,8 +82,16 @@ if "rota" in st.session_state:
     dados_rota = [{"caminho": rota["coordenadas"]}]
 
     dados_pontos = [
-        {"nome": "Origem", "coordenada": rota["origem"], "cor": [34, 139, 34]},
-        {"nome": "Destino", "coordenada": rota["destino"], "cor": [198, 68, 17]},
+        {
+            "nome": "Origem",
+            "coordenada": rota["origem"],
+            "cor": [34, 139, 34],
+        },
+        {
+            "nome": "Destino",
+            "coordenada": rota["destino"],
+            "cor": [198, 68, 17],
+        },
     ]
 
     camada_rota = pdk.Layer(

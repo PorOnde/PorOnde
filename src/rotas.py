@@ -97,3 +97,20 @@ def coordenadas_da_rota(nos_da_rota):
         ]
         for no in nos_da_rota
     ]
+def localizar_endereco(endereco):
+    """Localiza um endereço e devolve latitude e longitude."""
+    try:
+        local = ox.geocode_to_gdf(f"{endereco}, São Paulo, SP, Brasil")
+    except Exception as erro:
+        raise ValueError(
+            "Não foi possível localizar esse endereço. "
+            "Tente informar rua, número e bairro."
+        ) from erro
+
+    ponto = local.geometry.iloc[0].centroid
+    latitude = ponto.y
+    longitude = ponto.x
+
+    _validar_coordenada(latitude, longitude)
+
+    return latitude, longitude
