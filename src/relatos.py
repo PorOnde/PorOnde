@@ -5,7 +5,15 @@ from datetime import datetime, timedelta
 import pandas as pd
 
 from src.banco import conectar, criar_tabelas
-from src.config import MODO_DADOS
+from src.config import (
+    CATEGORIAS_VALIDADE_HORAS,
+    JANELA_ATIVACAO_HORAS,
+    LIMITE_RELATOS_POR_HORA,
+    MAX_CARACTERES_DESCRICAO,
+    MODO_DADOS,
+    RAIO_ATIVACAO_METROS,
+    SALDO_MINIMO_REJEICAO,
+)
 
 
 COLUNAS_ALERTAS = [
@@ -250,3 +258,174 @@ def listar_alertas_ativos():
         )
 
     return alertas.reindex(columns=COLUNAS_ALERTAS)
+
+def registrar_relato(categoria, descricao, lat, lon, id_sessao):
+    if categoria not in CATEGORIAS_VALIDADE_HORAS:
+        return "Categoria inválida."
+
+    if len(descricao) > MAX_CARACTERES_DESCRICAO:
+        return (
+            f"A descrição pode ter no máximo "
+            f"{MAX_CARACTERES_DESCRICAO} caracteres."
+        )
+
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except (TypeError, ValueError):
+        return "Latitude e longitude precisam ser números."
+
+    try:
+        sul, norte, oeste, leste = _obter_bbox_vm()
+    except RuntimeError as erro:
+        return str(erro)
+
+    if not (sul <= lat <= norte and oeste <= lon <= leste):
+        return "O relato precisa estar dentro da Vila Mariana."
+
+    agora = datetime.now()
+    inicio_ultima_hora = agora - timedelta(hours=1)
+
+    criar_tabelas()
+
+    with conectar() as conexao:
+        quantidade_na_ultima_hora = conexao.execute(
+            """
+            SELECT COUNT(*)
+            FROM relatos
+            WHERE id_sessao = ? AND criado_em >= ?
+            """,
+            (
+                id_sessao,
+                inicio_ultima_hora.isoformat(timespec="seconds"),
+            ),
+        ).fetchone()[0]
+
+        if quantidade_na_ultima_hora >= LIMITE_RELATOS_POR_HORA:
+            return (
+                f"Cada sessão pode enviar até "
+                f"{LIMITE_RELATOS_POR_HORA} relatos por hora."
+            )
+
+        expira_em = agora + timedelta(
+            hours=CATEGORIAS_VALIDADE_HORAS[categoria]
+        )
+
+        resultado = conexao.execute(
+            """
+            INSERT INTO relatos (
+                categoria, descricao, lat, lon, criado_em, expira_em,
+                status, confirmacoes, rejeicoes, id_sessao, simulado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                categoria,
+                descricao,
+                lat,
+                lon,
+                agora.isoformat(timespec="seconds"),
+                expira_em.isoformat(timespec="seconds"),
+                "pendente",
+                0,
+                0,
+                id_sessao,
+                0,
+            ),
+        )
+
+        id_relato = resultado.lastrowid
+
+    atualizar_status()
+
+    return id_relato
+
+def _distancia_em_metros(lat1, lon1, lat2, lon2):
+    raio_terra = 6_371_000
+
+    diferenca_lat = math.radians(lat2 - lat1)
+    diferenca_lon = math.radians(lon2 - lon1)
+
+    calculo = (
+        math.sin(diferenca_lat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(diferenca_lon / 2) ** 2
+    )
+
+    angulo = 2 * math.atan2(math.sqrt(calculo), math.sqrt(1 - calculo))
+
+    return raio_terra * angulo
+    
+def atualizar_status():
+    criar_tabelas()
+
+    agora = datetime.now()
+    limite_ativacao = agora - timedelta(hours=JANELA_ATIVACAO_HORAS)
+
+    with conectar() as conexao:
+        conexao.execute(
+            """
+            UPDATE relatos
+            SET status = 'expirado'
+            WHERE status IN ('pendente', 'ativo')
+              AND expira_em <= ?
+            """,
+            (agora.isoformat(timespec="seconds"),),
+        )
+
+        conexao.execute(
+            """
+            UPDATE relatos
+            SET status = 'rejeitado'
+            WHERE status IN ('pendente', 'ativo')
+              AND confirmacoes - rejeicoes <= ?
+            """,
+            (SALDO_MINIMO_REJEICAO,),
+        )
+
+        pendentes = conexao.execute(
+            """
+            SELECT id, categoria, lat, lon, id_sessao
+            FROM relatos
+            WHERE status = 'pendente'
+              AND criado_em >= ?
+            """,
+            (limite_ativacao.isoformat(timespec="seconds"),),
+        ).fetchall()
+
+        ids_ativar = set()
+
+        for indice, relato in enumerate(pendentes):
+            for comparado in pendentes[indice + 1:]:
+                mesma_categoria = (
+                    relato["categoria"] == comparado["categoria"]
+                )
+                sessoes_diferentes = (
+                    relato["id_sessao"] != comparado["id_sessao"]
+                )
+                distancia = _distancia_em_metros(
+                    relato["lat"],
+                    relato["lon"],
+                    comparado["lat"],
+                    comparado["lon"],
+                )
+
+                if (
+                    mesma_categoria
+                    and sessoes_diferentes
+                    and distancia <= RAIO_ATIVACAO_METROS
+                ):
+                    ids_ativar.add(relato["id"])
+                    ids_ativar.add(comparado["id"])
+
+        if ids_ativar:
+            conexao.executemany(
+                """
+                UPDATE relatos
+                SET status = 'ativo'
+                WHERE id = ?
+                """,
+                [(id_relato,) for id_relato in ids_ativar],
+            )
+
+    return sorted(ids_ativar)

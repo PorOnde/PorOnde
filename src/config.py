@@ -11,3 +11,19 @@ if MODO_DADOS not in {"real", "demo"}:
 
 ARQUIVO_BANCO_REAL = PASTA_DADOS / "poronde.db"
 ARQUIVO_BANCO_DEMO = PASTA_DADOS / "poronde_demo.db"
+
+CATEGORIAS_VALIDADE_HORAS = {
+    "Rua mal iluminada ou escura": 24,
+    "Via bloqueada ou obra": 24,
+    "Aglomeração ou tumulto": 12,
+    "Roubo ou furto ocorrido agora": 12,
+    "Transporte com problema (ônibus ou metrô)": 12,
+    "Outro": 12,
+}
+
+MAX_CARACTERES_DESCRICAO = 200
+LIMITE_RELATOS_POR_HORA = 3
+
+SALDO_MINIMO_REJEICAO = -1
+RAIO_ATIVACAO_METROS = 200
+JANELA_ATIVACAO_HORAS = 4
