@@ -66,6 +66,17 @@ def limpar_simulados():
     criar_tabelas()
 
     with conectar() as conexao:
+        conexao.execute(
+            """
+            DELETE FROM votos
+            WHERE id_relato IN (
+                SELECT id
+                FROM relatos
+                WHERE simulado = 1
+            )
+            """
+        )
+
         resultado = conexao.execute(
             "DELETE FROM relatos WHERE simulado = 1"
         )
@@ -428,4 +439,102 @@ def atualizar_status():
                 [(id_relato,) for id_relato in ids_ativar],
             )
 
-    return sorted(ids_ativar)
+    with conectar() as conexao:
+        linhas = conexao.execute(
+            """
+            SELECT status, COUNT(*) AS quantidade
+            FROM relatos
+            GROUP BY status
+            """
+        ).fetchall()
+
+    contagens = {
+        "pendente": 0,
+        "ativo": 0,
+        "rejeitado": 0,
+        "expirado": 0,
+    }
+
+    for linha in linhas:
+        contagens[linha["status"]] = linha["quantidade"]
+
+    return contagens
+
+def votar(id_relato, voto, id_sessao):
+    try:
+        id_relato = int(id_relato)
+        voto = int(voto)
+    except (TypeError, ValueError):
+        return False
+
+    if voto not in (1, -1):
+        return False
+
+    if not id_sessao:
+        return False
+
+    atualizar_status()
+
+    with conectar() as conexao:
+        relato = conexao.execute(
+            """
+            SELECT status
+            FROM relatos
+            WHERE id = ?
+            """,
+            (id_relato,),
+        ).fetchone()
+
+        if relato is None:
+            return False
+
+        if relato["status"] not in ("pendente", "ativo"):
+            return False
+
+        voto_existente = conexao.execute(
+            """
+            SELECT id
+            FROM votos
+            WHERE id_relato = ? AND id_sessao = ?
+            """,
+            (id_relato, id_sessao),
+        ).fetchone()
+
+        if voto_existente is not None:
+            return False
+
+        conexao.execute(
+            """
+            INSERT INTO votos (id_relato, id_sessao, voto, criado_em)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                id_relato,
+                id_sessao,
+                voto,
+                datetime.now().isoformat(timespec="seconds"),
+            ),
+        )
+
+        if voto == 1:
+            conexao.execute(
+                """
+                UPDATE relatos
+                SET confirmacoes = confirmacoes + 1
+                WHERE id = ?
+                """,
+                (id_relato,),
+            )
+        else:
+            conexao.execute(
+                """
+                UPDATE relatos
+                SET rejeicoes = rejeicoes + 1
+                WHERE id = ?
+                """,
+                (id_relato,),
+            )
+
+    atualizar_status()
+
+    return True

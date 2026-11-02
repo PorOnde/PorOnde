@@ -1,5 +1,7 @@
 geopandas
 networkx
 osmnx
+pandas
 scikit-learn
 streamlit
+
