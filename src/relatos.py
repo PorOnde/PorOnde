@@ -66,6 +66,17 @@ def limpar_simulados():
     criar_tabelas()
 
     with conectar() as conexao:
+        conexao.execute(
+            """
+            DELETE FROM votos
+            WHERE id_relato IN (
+                SELECT id
+                FROM relatos
+                WHERE simulado = 1
+            )
+            """
+        )
+
         resultado = conexao.execute(
             "DELETE FROM relatos WHERE simulado = 1"
         )
@@ -429,3 +440,82 @@ def atualizar_status():
             )
 
     return sorted(ids_ativar)
+
+def votar_relato(id_relato, id_sessao, voto):
+    try:
+        id_relato = int(id_relato)
+        voto = int(voto)
+    except (TypeError, ValueError):
+        return "Relato ou voto inválido."
+
+    if voto not in (1, -1):
+        return "O voto deve ser 1 para confirmar ou -1 para rejeitar."
+
+    if not id_sessao:
+        return "Sessão inválida."
+
+    atualizar_status()
+
+    with conectar() as conexao:
+        relato = conexao.execute(
+            """
+            SELECT status
+            FROM relatos
+            WHERE id = ?
+            """,
+            (id_relato,),
+        ).fetchone()
+
+        if relato is None:
+            return "Relato não encontrado."
+
+        if relato["status"] not in ("pendente", "ativo"):
+            return "Esse relato não pode mais receber votos."
+
+        voto_existente = conexao.execute(
+            """
+            SELECT id
+            FROM votos
+            WHERE id_relato = ? AND id_sessao = ?
+            """,
+            (id_relato, id_sessao),
+        ).fetchone()
+
+        if voto_existente is not None:
+            return "Esta sessão já votou nesse relato."
+
+        conexao.execute(
+            """
+            INSERT INTO votos (id_relato, id_sessao, voto, criado_em)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                id_relato,
+                id_sessao,
+                voto,
+                datetime.now().isoformat(timespec="seconds"),
+            ),
+        )
+
+        if voto == 1:
+            conexao.execute(
+                """
+                UPDATE relatos
+                SET confirmacoes = confirmacoes + 1
+                WHERE id = ?
+                """,
+                (id_relato,),
+            )
+        else:
+            conexao.execute(
+                """
+                UPDATE relatos
+                SET rejeicoes = rejeicoes + 1
+                WHERE id = ?
+                """,
+                (id_relato,),
+            )
+
+    atualizar_status()
+
+    return "Voto registrado."
