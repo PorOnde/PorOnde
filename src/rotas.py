@@ -1,5 +1,6 @@
 """Cálculo de rotas a pé na Vila Mariana."""
-
+import math
+from src.abrigos import listar_abrigos
 import networkx as nx
 import osmnx as ox
 
@@ -114,3 +115,79 @@ def localizar_endereco(endereco):
     _validar_coordenada(latitude, longitude)
 
     return latitude, longitude
+
+def _distancia_em_metros(lat1, lon1, lat2, lon2):
+    """Calcula a distância aproximada entre dois pontos."""
+    raio_terra = 6_371_000
+
+    latitude_1 = math.radians(lat1)
+    latitude_2 = math.radians(lat2)
+    diferenca_latitude = math.radians(lat2 - lat1)
+    diferenca_longitude = math.radians(lon2 - lon1)
+
+    valor = (
+        math.sin(diferenca_latitude / 2) ** 2
+        + math.cos(latitude_1)
+        * math.cos(latitude_2)
+        * math.sin(diferenca_longitude / 2) ** 2
+    )
+
+    return 2 * raio_terra * math.atan2(math.sqrt(valor), math.sqrt(1 - valor))
+
+
+def locais_apoio_proximos(nos_da_rota, raio_metros=200):
+    """Lista locais de apoio que ficam próximos ao trajeto."""
+    coordenadas = coordenadas_da_rota(nos_da_rota)
+    abrigos = listar_abrigos()
+    proximos = []
+
+    for _, abrigo in abrigos.iterrows():
+        menor_distancia = min(
+            _distancia_em_metros(
+                abrigo["lat"],
+                abrigo["lon"],
+                latitude,
+                longitude,
+            )
+            for longitude, latitude in coordenadas
+        )
+
+        if menor_distancia <= raio_metros:
+            proximos.append(
+                {
+                    "nome": abrigo["nome"],
+                    "tipo": abrigo["tipo"],
+                    "grupo": abrigo["grupo"],
+                    "lat": abrigo["lat"],
+                    "lon": abrigo["lon"],
+                    "distancia_metros": round(menor_distancia),
+                }
+            )
+
+    proximos_ordenados = sorted(
+        proximos,
+        key=lambda local: local["distancia_metros"],
+    )
+
+    selecionados = []
+    grupos_mostrados = set()
+    nomes_mostrados = set()
+
+    for local in proximos_ordenados:
+        if (
+            local["grupo"] not in grupos_mostrados
+            and local["nome"] not in nomes_mostrados
+        ):
+            selecionados.append(local)
+            grupos_mostrados.add(local["grupo"])
+            nomes_mostrados.add(local["nome"])
+
+    for local in proximos_ordenados:
+        if len(selecionados) == 5:
+            break
+
+        if local["nome"] not in nomes_mostrados:
+            selecionados.append(local)
+            nomes_mostrados.add(local["nome"])
+
+    return selecionados

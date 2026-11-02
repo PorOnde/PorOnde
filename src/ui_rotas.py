@@ -13,6 +13,7 @@ from src.rotas import (
     calcular_rota,
     coordenadas_da_rota,
     localizar_endereco,
+    locais_apoio_proximos,
 )
 
 st.set_page_config(
@@ -66,6 +67,7 @@ if calcular:
             rota["coordenadas"] = coordenadas_da_rota(rota["nos"])
             rota["origem"] = [longitude_origem, latitude_origem]
             rota["destino"] = [longitude_destino, latitude_destino]
+            rota["locais_apoio"] = locais_apoio_proximos(rota["nos"])
 
             st.session_state["rota"] = rota
 
@@ -93,6 +95,23 @@ if "rota" in st.session_state:
             "cor": [198, 68, 17],
         },
     ]
+
+    cores_grupos = {
+        "abrigo_amigo": [52, 109, 173],
+        "saude": [181, 49, 49],
+        "seguranca": [126, 84, 32],
+        "transporte_24h": [119, 70, 181],
+        "outro": [90, 90, 90],
+    }
+
+    for local in rota["locais_apoio"]:
+        dados_pontos.append(
+            {
+                "nome": f"{local['nome']} ({local['tipo']})",
+                "coordenada": [local["lon"], local["lat"]],
+                "cor": cores_grupos.get(local["grupo"], [90, 90, 90]),
+            }
+        )
 
     camada_rota = pdk.Layer(
         "PathLayer",
@@ -136,3 +155,14 @@ if "rota" in st.session_state:
         height=500,
         alt="Mapa com origem, destino e trajeto calculado.",
     )
+
+    st.subheader("Locais úteis próximos ao trajeto")
+
+    if rota["locais_apoio"]:
+        for local in rota["locais_apoio"]:
+            st.write(
+                f"**{local['nome']}** — {local['tipo']} "
+                f"({local['distancia_metros']} m da rota)"
+            )
+    else:
+        st.info("Não foram encontrados locais úteis a até 200 m da rota.")
