@@ -1,5 +1,7 @@
 """Cálculo de rotas a pé na Vila Mariana."""
+import json
 import math
+import time
 import pandas as pd
 from src.abrigos import listar_abrigos
 import networkx as nx
@@ -170,21 +172,90 @@ def coordenadas_da_rota(nos_da_rota):
         ]
         for no in nos_da_rota
     ]
-def localizar_endereco(endereco):
-    """Localiza um endereço e devolve latitude e longitude."""
+def _normalizar_endereco(endereco):
+    """Cria uma chave padronizada para o cache."""
+    return " ".join(endereco.lower().split())
+
+
+def _ler_cache_geocodificacao():
+    """Lê os endereços já consultados, se existirem."""
+    if not config.ARQUIVO_CACHE_GEOCODIFICACAO.exists():
+        return {}
+
     try:
-        local = ox.geocode_to_gdf(f"{endereco}, São Paulo, SP, Brasil")
+        with open(
+            config.ARQUIVO_CACHE_GEOCODIFICACAO,
+            "r",
+            encoding="utf-8",
+        ) as arquivo:
+            cache = json.load(arquivo)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    return cache if isinstance(cache, dict) else {}
+
+
+def _salvar_cache_geocodificacao(cache):
+    """Salva no disco os endereços localizados."""
+    config.PASTA_CACHE.mkdir(parents=True, exist_ok=True)
+
+    with open(
+        config.ARQUIVO_CACHE_GEOCODIFICACAO,
+        "w",
+        encoding="utf-8",
+    ) as arquivo:
+        json.dump(
+            cache,
+            arquivo,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+
+def localizar_endereco(endereco):
+    """Localiza um endereço e usa cache para evitar consultas repetidas."""
+    endereco = endereco.strip()
+
+    if not endereco:
+        raise ValueError("Informe um endereço.")
+
+    chave = _normalizar_endereco(endereco)
+    cache = _ler_cache_geocodificacao()
+
+    if chave in cache:
+        latitude = float(cache[chave]["latitude"])
+        longitude = float(cache[chave]["longitude"])
+        _validar_coordenada(latitude, longitude)
+        return latitude, longitude
+
+    try:
+        time.sleep(1)
+        local = ox.geocode_to_gdf(
+            f"{endereco}, São Paulo, SP, Brasil"
+        )
     except Exception as erro:
         raise ValueError(
             "Não foi possível localizar esse endereço. "
             "Tente informar rua, número e bairro."
         ) from erro
 
+    if local.empty:
+        raise ValueError(
+            "Não foi possível localizar esse endereço. "
+            "Tente informar rua, número e bairro."
+        )
+
     ponto = local.geometry.iloc[0].centroid
-    latitude = ponto.y
-    longitude = ponto.x
+    latitude = float(ponto.y)
+    longitude = float(ponto.x)
 
     _validar_coordenada(latitude, longitude)
+
+    cache[chave] = {
+        "latitude": latitude,
+        "longitude": longitude,
+    }
+    _salvar_cache_geocodificacao(cache)
 
     return latitude, longitude
 
