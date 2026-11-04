@@ -40,3 +40,13 @@ JANELA_ATIVACAO_HORAS = 4
 ARQUIVO_ABRIGOS = PASTA_DADOS / "tratados" / "abrigos.csv"
 ARQUIVO_LOCAIS_MANUAIS = PASTA_DADOS / "brutos" / "locais_apoio_manuais.csv"
 RAIO_ABRIGOS_METROS = 100
+PASTA_TRATADOS = PASTA_DADOS / "tratados"
+
+ARQUIVO_SCORE_REAL = PASTA_TRATADOS / "trechos_score.csv"
+ARQUIVO_SCORE_EXEMPLO = PASTA_TRATADOS / "trechos_score_exemplo.csv"
+
+ARQUIVO_SCORE = (
+    ARQUIVO_SCORE_REAL
+    if ARQUIVO_SCORE_REAL.exists()
+    else ARQUIVO_SCORE_EXEMPLO
+)

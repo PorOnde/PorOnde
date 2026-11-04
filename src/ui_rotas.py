@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from src import config
 
 RAIZ_PROJETO = Path(__file__).resolve().parent.parent
 
@@ -25,6 +26,11 @@ def aba_rotas():
         "Compare o trajeto a pé dentro da Vila Mariana. "
         "Tempo e distância não representam garantia de segurança."
     )
+    if config.ARQUIVO_SCORE == config.ARQUIVO_SCORE_EXEMPLO:
+     st.warning(
+            "Usando dados de exemplo para o Score de Contexto. "
+            "Os dados reais serão integrados quando a Parte A for concluída."
+        )
 
     st.subheader("Calcular rota")
 

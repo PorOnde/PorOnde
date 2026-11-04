@@ -1,5 +1,6 @@
 """Cálculo de rotas a pé na Vila Mariana."""
 import math
+import pandas as pd
 from src.abrigos import listar_abrigos
 import networkx as nx
 import osmnx as ox
@@ -9,6 +10,76 @@ from src.grafo import carregar_grafo
 
 
 VELOCIDADE_MEDIA_METROS_POR_MINUTO = 80
+
+def aplicar_scores_ao_grafo(grafo):
+    """Lê o CSV de score e adiciona os dados a cada trecho do grafo."""
+
+    if not config.ARQUIVO_SCORE.exists():
+        raise FileNotFoundError(
+            "Não foi encontrado nenhum arquivo de score para os trechos."
+        )
+
+    tabela_scores = pd.read_csv(config.ARQUIVO_SCORE)
+
+    colunas_obrigatorias = {
+        "edge_id",
+        "nome_rua",
+        "comprimento_m",
+        "lat_meio",
+        "lon_meio",
+        "n_luz",
+        "n_ocorrencias",
+        "n_abrigos",
+        "em_hotspot",
+        "score_iluminacao",
+        "score_base",
+        "cor",
+    }
+
+    colunas_ausentes = colunas_obrigatorias - set(tabela_scores.columns)
+
+    if colunas_ausentes:
+        raise ValueError(
+            "O arquivo de score está sem as colunas: "
+            f"{sorted(colunas_ausentes)}"
+        )
+
+    if tabela_scores["edge_id"].duplicated().any():
+        raise ValueError(
+            "O arquivo de score possui edge_id duplicado."
+        )
+
+    scores_por_trecho = tabela_scores.set_index("edge_id")
+    trechos_sem_score = []
+
+    for no_origem, no_destino, chave, dados in grafo.edges(
+        keys=True,
+        data=True,
+    ):
+        edge_id = f"{no_origem}_{no_destino}_{chave}"
+
+        if edge_id not in scores_por_trecho.index:
+            trechos_sem_score.append(edge_id)
+            continue
+
+        score = scores_por_trecho.loc[edge_id]
+
+        dados["score_iluminacao"] = float(
+            score["score_iluminacao"]
+        )
+        dados["score_base"] = float(score["score_base"])
+        dados["cor"] = str(score["cor"])
+
+        dados["n_luz"] = int(score["n_luz"])
+        dados["n_ocorrencias"] = int(score["n_ocorrencias"])
+        dados["n_abrigos"] = int(score["n_abrigos"])
+        dados["em_hotspot"] = int(score["em_hotspot"])
+
+    if trechos_sem_score:
+        raise ValueError(
+            "Existem trechos do grafo sem score: "
+            f"{len(trechos_sem_score)}"
+        )
 
 
 def _validar_coordenada(latitude, longitude):
@@ -37,6 +108,7 @@ def calcular_rota(
     _validar_coordenada(latitude_destino, longitude_destino)
 
     grafo = carregar_grafo()
+    aplicar_scores_ao_grafo(grafo)
 
     no_origem = ox.distance.nearest_nodes(
         grafo,
