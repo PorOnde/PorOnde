@@ -108,10 +108,16 @@ def criar_grafo_simples_para_alternativas(grafo):
                 no_origem,
                 no_destino,
                 length=comprimento,
+                origem_no=no_origem,
+                destino_no=no_destino,
                 score_iluminacao=float(
                     dados.get("score_iluminacao", 0)
                 ),
                 score_base=float(dados.get("score_base", 0)),
+                n_luz=int(dados.get("n_luz", 0)),
+                n_ocorrencias=int(dados.get("n_ocorrencias", 0)),
+                n_abrigos=int(dados.get("n_abrigos", 0)),
+                em_hotspot=int(dados.get("em_hotspot", 0)),
             )
 
     return grafo_simples
@@ -232,30 +238,62 @@ def _score_medio_da_rota(grafo, nos_da_rota, campo_score):
         return 0
 
     return total_pontos / total_comprimento
+def _identificar_pior_trecho(grafo, nos_da_rota):
+    """Identifica o trecho com menor score de contexto."""
+
+    pior_trecho = None
+
+    for origem, destino in zip(nos_da_rota, nos_da_rota[1:]):
+        dados = grafo[origem][destino]
+        score = float(dados.get("score_base", 0))
+
+        if pior_trecho is None or score < pior_trecho["score"]:
+            pior_trecho = {
+                "origem_no": origem,
+                "destino_no": destino,
+                "score": round(score, 1),
+            }
+
+    return pior_trecho
+
+def _analisar_fatores_rota(candidata):
+    """Organiza os indicadores disponíveis para explicar a rota."""
+
+    return {
+        "score_iluminacao": round(candidata["score_iluminacao"], 1),
+        "score_contexto": round(candidata["score_contexto"], 1),
+        "menor_score_contexto": candidata["pior_trecho"]["score"],
+    }
 
 
 def _formatar_alternativa(nome, candidata):
-    """Prepara uma rota candidata para a tela."""
-    return {
-        "nome": nome,
-        "nos": candidata["nos"],
-        "distancia_metros": round(
-            candidata["distancia_metros"]
+    """Prepara os dados e a justificativa de cada alternativa."""
+
+    justificativas = {
+        "Mais curta": (
+            "Menor distância entre os caminhos calculados."
         ),
-        "tempo_minutos": round(
-            candidata["tempo_minutos"],
-            1,
+        "Melhor iluminação": (
+            "Maior score de iluminação entre as alternativas "
+            "avaliadas, utilizando os dados disponíveis."
         ),
-        "score_iluminacao": round(
-            candidata["score_iluminacao"],
-            1,
-        ),
-        "score_contexto": round(
-            candidata["score_contexto"],
-            1,
+        "Melhor contexto": (
+            "Maior score de contexto entre as alternativas "
+            "avaliadas, utilizando os dados disponíveis."
         ),
     }
 
+    return {
+        "nome": nome,
+        "nos": candidata["nos"],
+        "distancia_metros": round(candidata["distancia_metros"]),
+        "tempo_minutos": round(candidata["tempo_minutos"], 1),
+        "score_iluminacao": round(candidata["score_iluminacao"], 1),
+        "score_contexto": round(candidata["score_contexto"], 1),
+        "justificativa": justificativas[nome],
+        "pior_trecho": candidata["pior_trecho"],
+        "fatores": _analisar_fatores_rota(candidata),
+    }
 
 def calcular_alternativas(
     latitude_origem,
@@ -331,6 +369,10 @@ def calcular_alternativas(
                     "score_base",
                 ),
             }
+            candidata["pior_trecho"] = _identificar_pior_trecho(
+                grafo_simples,
+                nos_da_rota,
+            )
 
             candidatas.append(candidata)
 
@@ -408,6 +450,27 @@ def coordenadas_da_rota(nos_da_rota):
             grafo.nodes[no]["y"],
         ]
         for no in nos_da_rota
+    ]
+def coordenadas_do_pior_trecho(pior_trecho):
+    """Obtém as coordenadas dos dois nós do pior trecho."""
+
+    if pior_trecho is None:
+        return []
+
+    grafo = carregar_grafo()
+
+    origem = pior_trecho["origem_no"]
+    destino = pior_trecho["destino_no"]
+
+    return [
+        [
+            grafo.nodes[origem]["y"],
+            grafo.nodes[origem]["x"],
+        ],
+        [
+            grafo.nodes[destino]["y"],
+            grafo.nodes[destino]["x"],
+        ],
     ]
 
 

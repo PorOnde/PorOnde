@@ -141,6 +141,18 @@ def aba_rotas():
                 f"{alternativa['score_iluminacao']:.1f}/100"
             )
 
+            st.write(alternativa["justificativa"])
+
+            pior_trecho = alternativa["pior_trecho"]
+
+            if pior_trecho is not None:
+                st.warning(
+                    f"Trecho com menor score de contexto: "
+                    f"{pior_trecho['score']:.1f}/100. "
+                    "Resultado baseado nos dados disponíveis."
+                )
+
+
     st.subheader(f"Mapa — {rota['nome']}")
 
     mapa = criar_mapa(rota, alternativas)

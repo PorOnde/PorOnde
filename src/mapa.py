@@ -1,5 +1,6 @@
 
 import folium
+from src.rotas import coordenadas_do_pior_trecho
 
 
 CORES_ROTAS = {
@@ -38,6 +39,22 @@ def criar_mapa(rota, alternativas=None):
             weight=6 if alternativa is rota else 4,
             opacity=1 if alternativa is rota else 0.6,
             tooltip=alternativa["nome"],
+        ).add_to(mapa)
+        pior_trecho = rota.get("pior_trecho")
+
+        if pior_trecho is not None:
+         coordenadas = coordenadas_do_pior_trecho(pior_trecho)
+
+        folium.PolyLine(
+            locations=coordenadas,
+            color="#D00000",
+            weight=10,
+            opacity=1,
+            tooltip=(
+                "Trecho com menor score de contexto: "
+                f"{pior_trecho['score']:.1f}/100 "
+                "(dados de demonstração)"
+            ),
         ).add_to(mapa)
 
     folium.Marker(
