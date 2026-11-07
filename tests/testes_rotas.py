@@ -1,7 +1,7 @@
 from src.rotas import calcular_alternativas, calcular_rota
 
 
-def executar_teste():
+def test_calcular_rotas():
     latitude_origem = -23.583690
     longitude_origem = -46.633915
     latitude_destino = -23.590000
@@ -59,4 +59,4 @@ def executar_teste():
 
 
 if __name__ == "__main__":
-    executar_teste()
+    test_calcular_rotas()

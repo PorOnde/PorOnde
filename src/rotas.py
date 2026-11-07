@@ -469,24 +469,14 @@ def localizar_endereco(endereco):
 
     try:
         time.sleep(1)
-        local = ox.geocode_to_gdf(
+        latitude, longitude = ox.geocode(
             f"{endereco}, São Paulo, SP, Brasil"
         )
     except Exception as erro:
         raise ValueError(
             "Não foi possível localizar esse endereço. "
-            "Tente informar rua, número e bairro."
+            "Confira a rua, o número e o bairro."
         ) from erro
-
-    if local.empty:
-        raise ValueError(
-            "Não foi possível localizar esse endereço. "
-            "Tente informar rua, número e bairro."
-        )
-
-    ponto = local.geometry.iloc[0].centroid
-    latitude = float(ponto.y)
-    longitude = float(ponto.x)
 
     _validar_coordenada(latitude, longitude)
 
