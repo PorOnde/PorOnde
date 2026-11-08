@@ -244,7 +244,8 @@ def gerar_relatos_simulados(semente=42):
 
 
 def listar_alertas_ativos():
-    criar_tabelas()
+    """Retorna somente os alertas que continuam ativos."""
+    atualizar_status()
 
     with conectar() as conexao:
         alertas = pd.read_sql_query(
