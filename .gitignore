@@ -4,3 +4,5 @@ __pycache__/
 data/*.db
 .env
 cache/
+# Credenciais privadas do Streamlit
+.streamlit/secrets.toml
