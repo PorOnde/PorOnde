@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 
 from src.config import ARQUIVO_BANCO_DEMO, ARQUIVO_BANCO_REAL, MODO_DADOS
+from contextlib import closing
 
 
 def conectar(caminho=None):
@@ -28,7 +29,7 @@ def conectar(caminho=None):
 def criar_tabelas(caminho=None):
     """Cria as tabelas de relatos e votos, caso ainda não existam."""
 
-    with conectar(caminho) as conexao:
+    with closing(conectar(caminho)) as conexao:
         conexao.executescript(
             """
             CREATE TABLE IF NOT EXISTS relatos (
@@ -59,6 +60,7 @@ def criar_tabelas(caminho=None):
                 FOREIGN KEY (id_relato) REFERENCES relatos(id),
                 UNIQUE (id_relato, id_sessao)
             );
+
             """
         )
 

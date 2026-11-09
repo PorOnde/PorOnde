@@ -3,6 +3,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from src import config
+from src.rotas_salvas import salvar_rota
 from src.mapa import criar_mapa
 from src.rotas import (
     calcular_alternativas,
@@ -51,6 +52,8 @@ def aba_rotas():
         st.session_state.pop("alternativas_rotas", None)
         st.session_state.pop("rota", None)
         st.session_state.pop("rota_selecionada", None)
+        st.session_state.pop("origem_rota", None)
+        st.session_state.pop("destino_rota", None)
 
         if not endereco_origem.strip() or not endereco_destino.strip():
             st.warning("Preencha origem e destino antes de calcular.")
@@ -87,6 +90,18 @@ def aba_rotas():
                     )
 
                 st.session_state["alternativas_rotas"] = alternativas
+
+                st.session_state["origem_rota"] = {
+                    "texto": endereco_origem.strip(),
+                    "lat": latitude_origem,
+                    "lon": longitude_origem,
+                }
+
+                st.session_state["destino_rota"] = {
+                    "texto": endereco_destino.strip(),
+                    "lat": latitude_destino,
+                    "lon": longitude_destino,
+                }
 
             except ValueError as erro:
                 st.error(str(erro))
@@ -151,9 +166,34 @@ def aba_rotas():
                     f"{pior_trecho['score']:.1f}/100. "
                     "Resultado baseado nos dados disponíveis."
                 )
+        st.subheader("Salvar rota")
 
+    if not st.user.is_logged_in:
+        st.info(
+            "Entre com sua conta Google para salvar "
+            "e acessar suas rotas pessoais."
+        )
+    else:
+        st.caption(
+            "Dê um nome para identificar este trajeto, "
+            "como Minha casa, Faculdade ou Trabalho."
+        )
 
-    st.subheader(f"Mapa — {rota['nome']}")
+        with st.form("form_salvar_rota"):
+            nome_rota = st.text_input(
+                "Nome da rota",
+                placeholder="Ex.: Minha faculdade",
+            )
+
+            confirmar_salvamento = st.form_submit_button(
+                "Salvar rota"
+            )
+
+        if confirmar_salvamento:
+            st.warning(
+                "O salvamento está temporariamente indisponível "
+                "enquanto configuramos o armazenamento privado."
+            )
 
     mapa = criar_mapa(rota, alternativas)
 
