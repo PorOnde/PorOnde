@@ -3,7 +3,6 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from src import config
-from src.rotas_salvas import salvar_rota
 from src.mapa import criar_mapa
 from src.rotas import (
     calcular_alternativas,
@@ -166,34 +165,6 @@ def aba_rotas():
                     f"{pior_trecho['score']:.1f}/100. "
                     "Resultado baseado nos dados disponíveis."
                 )
-        st.subheader("Salvar rota")
-
-    if not st.user.is_logged_in:
-        st.info(
-            "Entre com sua conta Google para salvar "
-            "e acessar suas rotas pessoais."
-        )
-    else:
-        st.caption(
-            "Dê um nome para identificar este trajeto, "
-            "como Minha casa, Faculdade ou Trabalho."
-        )
-
-        with st.form("form_salvar_rota"):
-            nome_rota = st.text_input(
-                "Nome da rota",
-                placeholder="Ex.: Minha faculdade",
-            )
-
-            confirmar_salvamento = st.form_submit_button(
-                "Salvar rota"
-            )
-
-        if confirmar_salvamento:
-            st.warning(
-                "O salvamento está temporariamente indisponível "
-                "enquanto configuramos o armazenamento privado."
-            )
 
     mapa = criar_mapa(rota, alternativas)
 
