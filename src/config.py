@@ -52,3 +52,12 @@ ARQUIVO_SCORE = (
 )
 PASTA_CACHE = PASTA_DADOS / "cache"
 ARQUIVO_CACHE_GEOCODIFICACAO = PASTA_CACHE / "geocodificacao.json"
+
+# Parte A — Classificação do Score de Contexto
+LIMITE_VERDE = 70
+LIMITE_AMARELO = 40
+
+# Parte A — Influência dos alertas comunitários na avaliação da rota
+RAIO_ALERTA_ROTA_M = 50
+PENALIDADE_ALERTA = 10
+LIMITE_PENALIDADE_ALERTA = 30
