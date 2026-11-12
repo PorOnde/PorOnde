@@ -10,6 +10,8 @@ import pandas as pd
 from src import config
 from src.abrigos import listar_abrigos
 from src.grafo import carregar_grafo
+from src.score import avaliar_rota
+from src.relatos import listar_alertas_ativos
 
 
 VELOCIDADE_MEDIA_METROS_POR_MINUTO = 80
@@ -93,7 +95,7 @@ def criar_grafo_simples_para_alternativas(grafo):
     """Converte o multigrafo em um grafo simples para gerar caminhos."""
     grafo_simples = nx.DiGraph()
 
-    for no_origem, no_destino, _, dados in grafo.edges(
+    for no_origem, no_destino, chave, dados in grafo.edges(
         keys=True,
         data=True,
     ):
@@ -118,6 +120,7 @@ def criar_grafo_simples_para_alternativas(grafo):
                 n_ocorrencias=int(dados.get("n_ocorrencias", 0)),
                 n_abrigos=int(dados.get("n_abrigos", 0)),
                 em_hotspot=int(dados.get("em_hotspot", 0)),
+                edge_id=f"{no_origem}_{no_destino}_{chave}",
             )
 
     return grafo_simples
@@ -252,6 +255,10 @@ def _identificar_pior_trecho(grafo, nos_da_rota):
                 "origem_no": origem,
                 "destino_no": destino,
                 "score": round(score, 1),
+                "n_luz": int(dados.get("n_luz", 0)),
+                "n_ocorrencias": int(dados.get("n_ocorrencias", 0)),
+                "n_abrigos": int(dados.get("n_abrigos", 0)),
+                "em_hotspot": int(dados.get("em_hotspot", 0)),
             }
 
     return pior_trecho
@@ -295,6 +302,15 @@ def _formatar_alternativa(nome, candidata):
         "fatores": _analisar_fatores_rota(candidata),
     }
 
+def obter_edge_ids(grafo, nos_da_rota):
+    return [
+        grafo[origem][destino]["edge_id"]
+        for origem, destino in zip(
+            nos_da_rota,
+            nos_da_rota[1:]
+        )
+    ]
+
 def calcular_alternativas(
     latitude_origem,
     longitude_origem,
@@ -324,6 +340,7 @@ def calcular_alternativas(
     )
 
     candidatas = []
+    alertas_ativos = listar_alertas_ativos()
 
     try:
         gerador_de_caminhos = nx.shortest_simple_paths(
@@ -373,6 +390,12 @@ def calcular_alternativas(
                 grafo_simples,
                 nos_da_rota,
             )
+
+            edge_ids = obter_edge_ids(grafo_simples, nos_da_rota)
+
+            avaliacao = avaliar_rota(edge_ids, alertas_ativos)
+
+            candidata["score_contexto"] = avaliacao["score_medio"]
 
             candidatas.append(candidata)
 

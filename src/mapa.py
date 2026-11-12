@@ -98,6 +98,7 @@ def criar_mapa(rota, alternativas=None):
     )
 
     rotas = alternativas if alternativas is not None else [rota]
+    rotas = [r for r in rotas if r is not rota] + [rota]
 
     for alternativa in rotas:
         coordenadas = [
@@ -125,11 +126,23 @@ def criar_mapa(rota, alternativas=None):
             color="#D00000",
             weight=10,
             opacity=1,
-            tooltip=(
-                "Trecho com menor score de contexto: "
-                f"{pior_trecho['score']:.1f}/100 "
-                "(dados de demonstração)"
-            ),
+            tooltip="Clique para ver os indicadores deste trecho",
+            popup=folium.Popup(
+              (
+                 f"<b>Trecho que merece atenção</b><br>"
+                 f"Score: {pior_trecho['score']:.1f}/100<br><br>"
+                 f"Iluminação cadastrada: {pior_trecho['n_luz']} pontos<br>"
+                 f"Fonte: GeoSampa<br><br>"
+                 f"Ocorrências associadas: {pior_trecho['n_ocorrencias']}<br>"
+                 f"Fonte: SSP-SP<br><br>"
+                 f"Locais de apoio próximos: {pior_trecho['n_abrigos']}<br>"
+                 f"Fonte: cadastro de locais úteis do PorOnde?<br><br>"
+                 f"Em área de concentração de registros: "
+                 f"{'Sim' if pior_trecho['em_hotspot'] else 'Não'}<br><br>"
+                 f"Datas de referência: aguardando confirmação da Parte A."
+    ),
+    max_width=350,
+),
         ).add_to(mapa)
 
 
