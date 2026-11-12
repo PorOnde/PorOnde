@@ -10,11 +10,11 @@ if str(RAIZ_PROJETO) not in sys.path:
 import streamlit as st
 
 from src.config import BBOX_VM, CATEGORIAS_VALIDADE_HORAS
-from src.relatos import (
-    atualizar_status,
-    listar_alertas_ativos,
-    registrar_relato,
-    votar,
+from src.supabase_db import (
+    contar_relatos_supabase,
+    listar_alertas_ativos_supabase,
+    registrar_relato_supabase,
+    votar_supabase,
 )
 
 
@@ -34,7 +34,7 @@ def aba_relatos(local_clicado=None):
         "Eles não representam garantia de segurança."
     )
 
-    contagens = atualizar_status()
+    contagens = contar_relatos_supabase()
 
     coluna_1, coluna_2, coluna_3, coluna_4 = st.columns(4)
     coluna_1.metric("Pendentes", contagens["pendente"])
@@ -83,7 +83,7 @@ def aba_relatos(local_clicado=None):
         if not descricao.strip():
             st.error("Escreva uma descrição antes de enviar.")
         else:
-            resultado = registrar_relato(
+            resultado = registrar_relato_supabase(
                 categoria,
                 descricao.strip(),
                 lat,
@@ -100,7 +100,7 @@ def aba_relatos(local_clicado=None):
     st.divider()
     st.subheader("Alertas ativos")
 
-    alertas = listar_alertas_ativos()
+    alertas = listar_alertas_ativos_supabase()
 
     if alertas.empty:
         st.info("Ainda não há alertas ativos.")
@@ -123,7 +123,7 @@ def aba_relatos(local_clicado=None):
                         "Confirmar",
                         key=f"confirmar_{alerta['id']}",
                     ):
-                        resultado = votar(
+                        resultado = votar_supabase(
                             int(alerta["id"]),
                             1,
                             st.session_state.id_sessao,
@@ -141,7 +141,7 @@ def aba_relatos(local_clicado=None):
                         "Não confirma",
                         key=f"rejeitar_{alerta['id']}",
                     ):
-                        resultado = votar(
+                        resultado = votar_supabase(
                             int(alerta["id"]),
                             -1,
                             st.session_state.id_sessao,
