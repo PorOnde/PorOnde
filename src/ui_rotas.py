@@ -157,6 +157,32 @@ def aba_rotas():
 
             st.write(alternativa["justificativa"])
 
+            avaliacao = alternativa["avaliacao"]
+
+            with st.expander("Entenda os indicadores desta rota"):
+               st.write(
+                  f"Trechos com iluminação cadastrada: "
+                  f"{avaliacao['n_trechos_com_luz']}"
+            )
+               st.write(
+                 f"Ocorrências associadas aos trechos: "
+                 f"{avaliacao['n_ocorrencias']}"
+            )
+               st.write(
+                f"Trechos em áreas de concentração de registros: "
+                f"{avaliacao['n_trechos_em_hotspot']}"
+            )
+               st.write(
+                f"Alertas comunitários próximos: "
+                f"{avaliacao['n_alertas_na_rota']}"
+            )
+
+               if avaliacao["n_trechos_com_abrigos"] is not None:
+                  st.write(
+                     f"Trechos com locais de apoio próximos: "
+                     f"{avaliacao['n_trechos_com_abrigos']}"
+        )
+
             pior_trecho = alternativa["pior_trecho"]
 
             if pior_trecho is not None:
@@ -165,6 +191,16 @@ def aba_rotas():
                     f"{pior_trecho['score']:.1f}/100. "
                     "Resultado baseado nos dados disponíveis."
                 )
+                st.caption(
+                   f"Neste trecho: "
+                   f"{pior_trecho['n_luz']} pontos de iluminação cadastrados | "
+                   f"{pior_trecho['n_ocorrencias']} ocorrências associadas | "
+                   f"{pior_trecho['n_abrigos']} locais de apoio próximos | "
+                   f"Área de concentração de registros: "
+                   f"{'Sim' if pior_trecho['em_hotspot'] else 'Não'}"
+    )
+
+
 
     mapa = criar_mapa(rota, alternativas)
 

@@ -2,10 +2,8 @@
 import folium
 from src.rotas import coordenadas_do_pior_trecho
 from src.config import MODO_DADOS, RAIO_ATIVACAO_METROS
-from src.relatos import (
-    _distancia_em_metros,
-    listar_alertas_ativos,
-)
+from src.relatos import _distancia_em_metros
+from src.supabase_db import listar_alertas_ativos_supabase
 
 
 CORES_ROTAS = {
@@ -186,7 +184,7 @@ def criar_mapa(rota, alternativas=None):
     show=True,
 )
     
-    alertas = listar_alertas_ativos()
+    alertas = listar_alertas_ativos_supabase()
     grupos_alertas = agrupar_alertas(alertas)
 
     for grupo in grupos_alertas:

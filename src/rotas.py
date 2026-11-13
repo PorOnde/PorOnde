@@ -11,12 +11,13 @@ from src import config
 from src.abrigos import listar_abrigos
 from src.grafo import carregar_grafo
 from src.score import avaliar_rota
-from src.relatos import listar_alertas_ativos
+from src.supabase_db import listar_alertas_ativos_supabase
 
 
 VELOCIDADE_MEDIA_METROS_POR_MINUTO = 80
 FATOR_MAXIMO_ALTERNATIVA = 1.4
 LIMITE_CANDIDATOS_ALTERNATIVAS = 30
+FRACAO_MINIMA_DIFERENTE = 0.30
 
 
 def aplicar_scores_ao_grafo(grafo):
@@ -300,6 +301,7 @@ def _formatar_alternativa(nome, candidata):
         "justificativa": justificativas[nome],
         "pior_trecho": candidata["pior_trecho"],
         "fatores": _analisar_fatores_rota(candidata),
+        "avaliacao": candidata["avaliacao"],
     }
 
 def obter_edge_ids(grafo, nos_da_rota):
@@ -310,6 +312,27 @@ def obter_edge_ids(grafo, nos_da_rota):
             nos_da_rota[1:]
         )
     ]
+
+def rotas_suficientemente_diferentes(candidata, selecionadas):
+    """Verifica se pelo menos 30% da rota é diferente das já escolhidas."""
+
+    trechos_candidata = set(candidata["edge_ids"])
+
+    for selecionada in selecionadas:
+        trechos_selecionada = set(selecionada["edge_ids"])
+
+        sobreposicao = len(
+            trechos_candidata & trechos_selecionada
+        )
+
+        proporcao_diferente = (
+            1 - sobreposicao / len(trechos_candidata)
+        )
+
+        if proporcao_diferente < FRACAO_MINIMA_DIFERENTE:
+            return False
+
+    return True
 
 def calcular_alternativas(
     latitude_origem,
@@ -340,7 +363,7 @@ def calcular_alternativas(
     )
 
     candidatas = []
-    alertas_ativos = listar_alertas_ativos()
+    alertas_ativos = listar_alertas_ativos_supabase()
 
     try:
         gerador_de_caminhos = nx.shortest_simple_paths(
@@ -392,10 +415,12 @@ def calcular_alternativas(
             )
 
             edge_ids = obter_edge_ids(grafo_simples, nos_da_rota)
+            candidata["edge_ids"] = edge_ids
 
             avaliacao = avaliar_rota(edge_ids, alertas_ativos)
 
             candidata["score_contexto"] = avaliacao["score_medio"]
+            candidata["avaliacao"] = avaliacao
 
             candidatas.append(candidata)
 
@@ -421,6 +446,8 @@ def calcular_alternativas(
 
     caminhos_usados = {tuple(candidatas[0]["nos"])}
 
+    rotas_selecionadas = [candidatas[0]]
+
     criterios = [
         ("Melhor iluminação", "score_iluminacao"),
         ("Melhor contexto", "score_contexto"),
@@ -430,7 +457,12 @@ def calcular_alternativas(
         elegiveis = [
             candidata
             for candidata in candidatas
-            if tuple(candidata["nos"]) not in caminhos_usados
+            if (
+                tuple(candidata["nos"]) not in caminhos_usados
+                and rotas_suficientemente_diferentes(
+                candidata, rotas_selecionadas
+    )
+)
         ]
 
         if not elegiveis:
@@ -448,6 +480,7 @@ def calcular_alternativas(
             _formatar_alternativa(nome, melhor_candidata)
         )
         caminhos_usados.add(tuple(melhor_candidata["nos"]))
+        rotas_selecionadas.append(melhor_candidata)
 
     return alternativas
 
