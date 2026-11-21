@@ -31,6 +31,8 @@ def listar_relatos_supabase():
         .execute()
     )
 
+    return resposta.data
+
 def registrar_relato_supabase(categoria, descricao, lat, lon, id_sessao):
     """Valida e registra um relato no Supabase."""
     descricao = descricao.strip()

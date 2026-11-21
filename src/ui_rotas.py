@@ -150,6 +150,17 @@ def aba_rotas():
                 f"{alternativa['score_contexto']:.1f}/100",
             )
 
+            score = alternativa["score_contexto"]
+
+            if score >= 70:
+               classificacao = "🟢 Contexto mais favorável"
+            elif score >= 40:
+               classificacao = "🟡 Contexto intermediário"
+            else:
+               classificacao = "🔴 Contexto menos favorável"
+
+            st.write(classificacao)
+
             st.caption(
                 "Score de iluminação: "
                 f"{alternativa['score_iluminacao']:.1f}/100"

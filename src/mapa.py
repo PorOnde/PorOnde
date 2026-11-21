@@ -1,21 +1,37 @@
 
 import folium
-from src.rotas import coordenadas_do_pior_trecho
-from src.config import MODO_DADOS, RAIO_ATIVACAO_METROS
+
+from src.config import (
+    LIMITE_AMARELO,
+    LIMITE_VERDE,
+    MODO_DADOS,
+    RAIO_ATIVACAO_METROS,
+)
 from src.relatos import _distancia_em_metros
+from src.rotas import coordenadas_do_pior_trecho
 from src.supabase_db import listar_alertas_ativos_supabase
 
 
-CORES_ROTAS = {
-    "Mais curta": "#C64411",
-    "Melhor iluminação": "#27834A",
-    "Melhor contexto": "#2563A6",
+CORES_CONTEXTO = {
+    "verde": "#27834A",
+    "amarelo": "#E0AE32",
+    "vermelho": "#C64411",
 }
+
+
+def classificar_contexto(score):
+    """Classifica a pontuação de contexto de uma rota."""
+    if score >= LIMITE_VERDE:
+        return "verde"
+
+    if score >= LIMITE_AMARELO:
+        return "amarelo"
+
+    return "vermelho"
 
 
 def agrupar_alertas(alertas):
     """Agrupa visualmente alertas próximos da mesma categoria."""
-
     grupos = []
 
     for _, alerta in alertas.iterrows():
@@ -63,14 +79,8 @@ def agrupar_alertas(alertas):
     for grupo in grupos:
         pontos = grupo["pontos"]
 
-        grupo["lat"] = sum(
-            ponto["lat"] for ponto in pontos
-        ) / len(pontos)
-
-        grupo["lon"] = sum(
-            ponto["lon"] for ponto in pontos
-        ) / len(pontos)
-
+        grupo["lat"] = sum(ponto["lat"] for ponto in pontos) / len(pontos)
+        grupo["lon"] = sum(ponto["lon"] for ponto in pontos) / len(pontos)
         grupo["quantidade"] = len(pontos)
         grupo["simulado"] = all(
             ponto["simulado"] for ponto in pontos
@@ -79,10 +89,8 @@ def agrupar_alertas(alertas):
     return grupos
 
 
-
 def criar_mapa(rota, alternativas=None):
-    """Cria o mapa Folium com até três rotas alternativas."""
-
+    """Cria o mapa com rotas coloridas pelo Score de Contexto."""
     origem = rota["origem"]
     destino = rota["destino"]
 
@@ -96,27 +104,50 @@ def criar_mapa(rota, alternativas=None):
     )
 
     rotas = alternativas if alternativas is not None else [rota]
-    rotas = [r for r in rotas if r is not rota] + [rota]
 
-    for alternativa in rotas:
+    # Desenha a rota selecionada por último para destacá-la.
+    rotas_ordenadas = [r for r in rotas if r is not rota] + [rota]
+
+    for alternativa in rotas_ordenadas:
         coordenadas = [
             [latitude, longitude]
             for longitude, latitude in alternativa["coordenadas"]
         ]
 
+        score = float(alternativa["score_contexto"])
+        classificacao = classificar_contexto(score)
+        cor = CORES_CONTEXTO[classificacao]
+
         folium.PolyLine(
             locations=coordenadas,
-            color=CORES_ROTAS.get(alternativa["nome"], "#C64411"),
-            weight=6 if alternativa is rota else 4,
-            opacity=1 if alternativa is rota else 0.6,
-            tooltip=alternativa["nome"],
+            color=cor,
+            weight=7 if alternativa is rota else 4,
+            opacity=1 if alternativa is rota else 0.65,
+            tooltip=(
+                f"{alternativa['nome']} — "
+                f"Contexto {classificacao}: {score:.1f}/100"
+            ),
         ).add_to(mapa)
-        
+
     pior_trecho = rota.get("pior_trecho")
 
     if pior_trecho is not None:
         coordenadas_pior_trecho = coordenadas_do_pior_trecho(
             pior_trecho
+        )
+
+        popup_pior_trecho = (
+            "<b>Trecho que merece atenção</b><br>"
+            f"Score: {pior_trecho['score']:.1f}/100<br><br>"
+            f"Iluminação cadastrada: {pior_trecho['n_luz']} pontos<br>"
+            "Fonte: GeoSampa<br><br>"
+            f"Ocorrências associadas: {pior_trecho['n_ocorrencias']}<br>"
+            "Fonte: SSP-SP<br><br>"
+            f"Locais de apoio próximos: {pior_trecho['n_abrigos']}<br>"
+            "Fonte: cadastro de locais úteis do PorOnde?<br><br>"
+            "Em área de concentração de registros: "
+            f"{'Sim' if pior_trecho['em_hotspot'] else 'Não'}<br><br>"
+            "Datas de referência: aguardando confirmação da Parte A."
         )
 
         folium.PolyLine(
@@ -126,23 +157,10 @@ def criar_mapa(rota, alternativas=None):
             opacity=1,
             tooltip="Clique para ver os indicadores deste trecho",
             popup=folium.Popup(
-              (
-                 f"<b>Trecho que merece atenção</b><br>"
-                 f"Score: {pior_trecho['score']:.1f}/100<br><br>"
-                 f"Iluminação cadastrada: {pior_trecho['n_luz']} pontos<br>"
-                 f"Fonte: GeoSampa<br><br>"
-                 f"Ocorrências associadas: {pior_trecho['n_ocorrencias']}<br>"
-                 f"Fonte: SSP-SP<br><br>"
-                 f"Locais de apoio próximos: {pior_trecho['n_abrigos']}<br>"
-                 f"Fonte: cadastro de locais úteis do PorOnde?<br><br>"
-                 f"Em área de concentração de registros: "
-                 f"{'Sim' if pior_trecho['em_hotspot'] else 'Não'}<br><br>"
-                 f"Datas de referência: aguardando confirmação da Parte A."
-    ),
-    max_width=350,
-),
+                popup_pior_trecho,
+                max_width=350,
+            ),
         ).add_to(mapa)
-
 
     folium.Marker(
         location=[origem[1], origem[0]],
@@ -173,17 +191,18 @@ def criar_mapa(rota, alternativas=None):
                 icon="info-sign",
             ),
         ).add_to(mapa)
+
     nome_camada = (
-    "Alertas da comunidade (demonstração)"
-    if MODO_DADOS == "demo"
-    else "Alertas da comunidade"
-)
+        "Alertas da comunidade (demonstração)"
+        if MODO_DADOS == "demo"
+        else "Alertas da comunidade"
+    )
 
     camada_alertas = folium.FeatureGroup(
-    name=nome_camada,
-    show=True,
-)
-    
+        name=nome_camada,
+        show=True,
+    )
+
     alertas = listar_alertas_ativos_supabase()
     grupos_alertas = agrupar_alertas(alertas)
 
@@ -214,7 +233,6 @@ def criar_mapa(rota, alternativas=None):
                 icon="exclamation-sign",
             ),
         ).add_to(camada_alertas)
-
 
     camada_alertas.add_to(mapa)
     folium.LayerControl().add_to(mapa)
