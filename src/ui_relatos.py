@@ -45,17 +45,45 @@ def aba_relatos(local_clicado=None):
     st.divider()
     st.subheader("Registrar um relato")
 
-    with st.form("formulario_relato"):
-        categoria = st.selectbox(
-            "Categoria",
-            list(CATEGORIAS_VALIDADE_HORAS),
+    categoria = st.selectbox(
+        "Categoria",
+        list(CATEGORIAS_VALIDADE_HORAS),
         )
+
+    with st.form("formulario_relato"):
 
         descricao = st.text_area(
             "Descrição",
             max_chars=160,
             placeholder="Descreva o que você observou.",
         )
+
+        rua = None
+        data_ocorrencia = None
+        horario_ocorrencia = None
+
+        if categoria == "Roubo ou furto relatado":
+            st.caption("Informe quando aconteceu a ocorrência.")
+
+            rua_digitada = st.text_input(
+                "Nome da rua (opcional)",
+                placeholder="Ex.: Rua Domingos de Morais",
+            )
+            rua = rua_digitada.strip() or None
+
+            data_ocorrencia = st.date_input(
+                "Data da ocorrência",
+                value=None,
+            )
+
+            sabe_horario = st.checkbox(
+                "Sei o horário aproximado",
+            )
+
+            if sabe_horario:
+                horario_ocorrencia = st.time_input(
+                    "Horário aproximado",
+                )
 
         coluna_lat, coluna_lon = st.columns(2)
 
@@ -89,6 +117,9 @@ def aba_relatos(local_clicado=None):
                 lat,
                 lon,
                 st.session_state.id_sessao,
+                rua=rua,
+                data_ocorrencia=data_ocorrencia,
+                horario_ocorrencia=horario_ocorrencia,
             )
 
             if isinstance(resultado, int):

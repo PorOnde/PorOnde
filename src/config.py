@@ -23,12 +23,27 @@ NOME_LUGAR = "Vila Mariana, São Paulo, Brazil"
 
 
 CATEGORIAS_VALIDADE_HORAS = {
-    "Rua mal iluminada ou escura": 24,
-    "Via bloqueada ou obra": 24,
-    "Aglomeração ou tumulto": 12,
-    "Roubo ou furto ocorrido agora": 12,
-    "Transporte com problema (ônibus ou metrô)": 12,
-    "Outro": 12,
+    "Iluminação insuficiente": 480,     # 20 dias
+    "Obras ou bloqueios": 72,           # 3 dias
+    "Problema na calçada": 480,         # 20 dias
+    "Tumulto ou confusão": 24,
+    "Aglomeração comum": 24,
+    "Problema no transporte": 12,
+    "Roubo ou furto relatado": 24,
+    "Alagamento": 24,
+    "Outros": 12,
+}
+
+JANELAS_ATIVACAO_HORAS = {
+    "Iluminação insuficiente": 168,
+    "Obras ou bloqueios": 24,
+    "Problema na calçada": 168,
+    "Tumulto ou confusão": 4,
+    "Aglomeração comum": 4,
+    "Problema no transporte": 4,
+    "Roubo ou furto relatado": 480,
+    "Alagamento": 4,
+    "Outros": 4,
 }
 
 MAX_CARACTERES_DESCRICAO = 200

@@ -33,9 +33,23 @@ def listar_relatos_supabase():
 
     return resposta.data
 
-def registrar_relato_supabase(categoria, descricao, lat, lon, id_sessao):
+
+def registrar_relato_supabase(
+    categoria,
+    descricao,
+    lat,
+    lon,
+    id_sessao,
+    rua=None,
+    data_ocorrencia=None,
+    horario_ocorrencia=None,
+):
     """Valida e registra um relato no Supabase."""
-    descricao = descricao.strip()
+    from datetime import date, time
+    import math
+
+    descricao = str(descricao or "").strip()
+    rua = str(rua or "").strip() or None
 
     if categoria not in CATEGORIAS_VALIDADE_HORAS:
         return "Categoria inválida."
@@ -49,6 +63,8 @@ def registrar_relato_supabase(categoria, descricao, lat, lon, id_sessao):
     try:
         lat = float(lat)
         lon = float(lon)
+        if not math.isfinite(lat) or not math.isfinite(lon):
+            return "Coordenadas inválidas."
     except (TypeError, ValueError):
         return "Coordenadas inválidas."
 
@@ -57,8 +73,50 @@ def registrar_relato_supabase(categoria, descricao, lat, lon, id_sessao):
     if not (sul <= lat <= norte and oeste <= lon <= leste):
         return "O relato precisa estar dentro da Vila Mariana."
 
-    cliente = conectar_supabase()
     agora = datetime.now(timezone.utc)
+    ocorrido_em = None
+
+    if categoria == "Roubo ou furto relatado":
+        if data_ocorrencia is None or str(data_ocorrencia).strip() == "":
+            return "Informe a data em que a ocorrência aconteceu."
+
+        try:
+            if isinstance(data_ocorrencia, datetime):
+                data = data_ocorrencia.date()
+            elif isinstance(data_ocorrencia, date):
+                data = data_ocorrencia
+            else:
+                data = date.fromisoformat(str(data_ocorrencia))
+
+            if data > agora.astimezone(
+                timezone(timedelta(hours=-3))
+            ).date():
+                return "A data não pode estar no futuro."
+
+            if horario_ocorrencia is None or str(horario_ocorrencia).strip() == "":
+                # Meio-dia apenas como referência técnica.
+                # Não representa um horário confirmado.
+                hora = time(12, 0)
+                horario_foi_informado = False
+            elif isinstance(horario_ocorrencia, time):
+                hora = horario_ocorrencia
+                horario_foi_informado = True
+            else:
+                hora = time.fromisoformat(str(horario_ocorrencia))
+                horario_foi_informado = True
+
+            fuso_sp = timezone(timedelta(hours=-3))
+            ocorrido_em = datetime.combine(
+                data, hora, tzinfo=fuso_sp
+            ).astimezone(timezone.utc)
+
+            if ocorrido_em < agora - timedelta(days=20):
+                return "Só é possível registrar ocorrências dos últimos 20 dias."
+
+        except (ValueError, TypeError):
+            return "Data ou horário da ocorrência inválido."
+
+    cliente = conectar_supabase()
     inicio = agora - timedelta(hours=1)
 
     resposta = (
@@ -77,19 +135,36 @@ def registrar_relato_supabase(categoria, descricao, lat, lon, id_sessao):
         hours=CATEGORIAS_VALIDADE_HORAS[categoria]
     )
 
-    resultado = cliente.table("relatos").insert({
+    dados = {
         "categoria": categoria,
         "descricao": descricao,
         "lat": lat,
         "lon": lon,
+        "rua": rua,
+        "horario_informado": (
+        horario_foi_informado
+        if categoria == "Roubo ou furto relatado"
+    else False
+),
+        "ocorrido_em": (
+            ocorrido_em.isoformat() if ocorrido_em else None
+        ),
         "criado_em": agora.isoformat(),
         "expira_em": expira_em.isoformat(),
         "status": "pendente",
         "id_sessao": id_sessao,
         "simulado": False,
-    }).execute()
+        "afeta_score": False,
+    }
+
+    resultado = (
+        cliente.table("relatos")
+        .insert(dados)
+        .execute()
+    )
 
     return resultado.data[0]["id"]
+
 
 def votar_supabase(id_relato, voto, id_sessao):
     """Registra um voto por meio da função segura do PostgreSQL."""
@@ -107,6 +182,22 @@ def votar_supabase(id_relato, voto, id_sessao):
 
     return resposta.data is True
 
+def registrar_verificacao_supabase(id_relato, id_sessao, continua):
+    """Registra se um alerta ainda continua acontecendo."""
+    if not id_sessao or not isinstance(continua, bool):
+        return False
+
+    resposta = conectar_supabase().rpc(
+        "registrar_verificacao_alerta",
+        {
+            "p_id_relato": int(id_relato),
+            "p_id_sessao": id_sessao,
+            "p_continua": continua,
+        },
+    ).execute()
+
+    return resposta.data is True
+
 
 def atualizar_alertas_supabase():
     """Atualiza os alertas expirados e ativa os relatos elegíveis."""
@@ -114,10 +205,16 @@ def atualizar_alertas_supabase():
 
     expirados = cliente.rpc("expirar_alertas").execute().data
     ativados = cliente.rpc("ativar_alertas").execute().data
+    renovados = cliente.rpc("renovar_alertas").execute().data
+    recorrencias = cliente.rpc(
+    "identificar_recorrencias_roubo_furto"
+    ).execute().data
 
     return {
         "expirados": expirados,
         "ativados": ativados,
+        "recorrencias": recorrencias,
+        "renovados": renovados,
     }
 
 def listar_alertas_ativos_supabase():
@@ -174,3 +271,19 @@ def contar_relatos_supabase():
         contagens[status] = resposta.count or 0
 
     return contagens
+
+def listar_recorrencias_ativas_supabase():
+    """Consulta somente recorrências de roubo ou furto ainda válidas."""
+    agora = datetime.now(timezone.utc).isoformat()
+
+    resposta = (
+        conectar_supabase()
+        .table("recorrencias_roubo_furto")
+        .select("*")
+        .gt("expira_em", agora)
+        .order("ativado_em", desc=True)
+        .limit(100)
+        .execute()
+    )
+
+    return resposta.data
