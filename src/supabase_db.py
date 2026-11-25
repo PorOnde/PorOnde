@@ -11,6 +11,7 @@ from src.config import (
     CATEGORIAS_VALIDADE_HORAS,
     LIMITE_RELATOS_POR_HORA,
     MAX_CARACTERES_DESCRICAO,
+    MODO_DADOS,
 )
 
 
@@ -22,6 +23,12 @@ FUSO_SP = timezone(timedelta(hours=-3))
 @st.cache_resource
 def conectar_supabase():
     """Cria uma conexão privada com o Supabase."""
+
+    if MODO_DADOS == "demo":
+        raise RuntimeError(
+            "O modo demonstração não pode acessar o banco real."
+        )
+
     return create_client(
         st.secrets["supabase"]["url"],
         st.secrets["supabase"]["secret_key"],
@@ -225,6 +232,11 @@ def registrar_relato_supabase(
     if not resultado.data:
         return "Não foi possível registrar o relato."
 
+    try:
+        registrar_evento("relato_enviado")
+    except Exception:
+        print("Não foi possível registrar o evento de uso.")
+
     return resultado.data[0]["id"]
 
 
@@ -247,7 +259,15 @@ def votar_supabase(id_relato, voto, id_sessao):
         .execute()
     )
 
-    return resposta.data is True
+    if resposta.data is True:
+        try:
+            registrar_evento("voto")
+        except Exception:
+            print("Não foi possível registrar o evento de uso.")
+
+        return True
+
+    return False
 
 
 def registrar_verificacao_supabase(id_relato, id_sessao, continua):
@@ -392,6 +412,37 @@ def listar_recorrencias_ativas_supabase():
         .gt("expira_em", agora)
         .order("ativado_em", desc=True)
         .limit(100)
+        .execute()
+    )
+
+    return resposta.data
+
+def registrar_evento(tipo):
+    """Registra uma ação anônima realizada na plataforma."""
+
+    if MODO_DADOS != "real":
+        return
+
+    tipos_permitidos = {
+        "busca_trajeto",
+        "rota_salva",
+        "relato_enviado",
+        "voto",
+    }
+
+    if tipo not in tipos_permitidos:
+        raise ValueError("Tipo de evento inválido.")
+
+    conectar_supabase().table("eventos").insert(
+        {"tipo": tipo}
+    ).execute()
+
+def resumo_uso():
+    """Retorna as estatísticas de utilização da plataforma."""
+
+    resposta = (
+        conectar_supabase()
+        .rpc("resumo_uso")
         .execute()
     )
 

@@ -1,4 +1,88 @@
-nome,codigo
+BEGIN;
+
+-- B12: estrutura da tabela de eventos
+CREATE TABLE IF NOT EXISTS public.eventos (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    tipo TEXT NOT NULL CHECK (
+        tipo IN (
+            'busca_trajeto',
+            'rota_salva',
+            'relato_enviado',
+            'voto'
+        )
+    ),
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.eventos ENABLE ROW LEVEL SECURITY;
+
+GRANT SELECT, INSERT ON public.eventos TO service_role;
+
+-- janela_ativacao_categoria
+CREATE OR REPLACE FUNCTION public.janela_ativacao_categoria(p_categoria text)
+ RETURNS interval
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO ''
+AS $function$
+    SELECT CASE
+        WHEN p_categoria IN (
+            'Iluminação insuficiente',
+            'Problema na calçada'
+        ) THEN INTERVAL '7 days'
+
+        WHEN p_categoria = 'Obras ou bloqueios'
+            THEN INTERVAL '24 hours'
+
+        WHEN p_categoria = 'Roubo ou furto relatado'
+            THEN INTERVAL '20 days'
+
+        WHEN p_categoria IN (
+            'Tumulto ou confusão',
+            'Aglomeração comum',
+            'Problema no transporte',
+            'Alagamento',
+            'Outros'
+        ) THEN INTERVAL '4 hours'
+
+        ELSE NULL
+    END;
+$function$;
+
+-- ativar_alertas
+CREATE OR REPLACE FUNCTION public.ativar_alertas()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+DECLARE
+    quantidade INTEGER;
+BEGIN
+    UPDATE public.relatos AS r
+    SET
+        status = 'ativo',
+        ativado_em = NOW(),
+        expira_em = NOW() + CASE
+            WHEN r.categoria IN (
+                'Iluminação insuficiente',
+                'Problema na calçada'
+            ) THEN INTERVAL '20 days'
+
+            WHEN r.categoria = 'Obras ou bloqueios'
+                THEN INTERVAL '3 days'
+
+            WHEN r.categoria IN (
+                'Tumulto ou confusão',
+                'Aglomeração comum',
+                'Alagamento'
+            ) THEN INTERVAL '24 hours'
+
+            ELSE INTERVAL '12 hours'
+        END,
+        afeta_score = r.categoria IN (
+            'Iluminação insuficiente',
+            'Obras ou bloqueios',
+            'Problema na calçada',nome,codigo
 ativar_alertas,"CREATE OR REPLACE FUNCTION public.ativar_alertas()
  RETURNS integer
  LANGUAGE plpgsql
