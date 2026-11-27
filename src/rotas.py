@@ -7,6 +7,9 @@ from functools import lru_cache
 from itertools import chain
 from pathlib import Path
 from threading import Lock
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 import networkx as nx
 import osmnx as ox
@@ -714,28 +717,60 @@ def _geocodificar_memoria(chave):
         longitude = float(cache[chave]["longitude"])
         _validar_coordenada(latitude, longitude)
         return latitude, longitude
+
+    api_key = os.getenv("GEOAPIFY_API_KEY", "").strip()
+    if not api_key:
+        print("[GEOCODIFICACAO] GEOAPIFY_API_KEY nao configurada.", flush=True)
+        raise ValueError("Serviço de localização indisponível. Tente novamente mais tarde.")
+
+    sul, norte, oeste, leste = config.BBOX_VM
+    parametros = {
+        "text": f"{chave}, São Paulo, SP, Brasil",
+        "filter": f"rect:{oeste},{sul},{leste},{norte}",
+        "bias": f"proximity:{(oeste + leste) / 2},{(sul + norte) / 2}",
+        "lang": "pt",
+        "format": "json",
+        "limit": 5,
+        "apiKey": api_key,
+    }
+
     try:
-        # A consulta externa só ocorre no envio do formulário, nunca ao digitar.
-        # Respeita o intervalo do provedor em um processo, sem gravar novos endereços em disco.
+        # Consulta somente no envio; mantém o intervalo e o cache em memória.
         intervalo = 1.1 - (time.monotonic() - _ultima_geocodificacao)
         if intervalo > 0:
             time.sleep(intervalo)
-        ox.settings.requests_timeout = 10
-        ox.settings.http_user_agent = os.getenv("PORONDE_GEOCODE_USER_AGENT", "PorOnde-MVP/1.0 (academic pilot)")
-        # O próprio OSMnx pode persistir as respostas: desativa durante esta consulta.
-        cache_original = ox.settings.use_cache
-        ox.settings.use_cache = False
-        try:
-            _ultima_geocodificacao = time.monotonic()
-            latitude, longitude = ox.geocode(f"{chave}, São Paulo, SP, Brasil")
-        finally:
-            ox.settings.use_cache = cache_original
-    except Exception as erro:
-        print(f"[GEOCODIFICACAO] {type(erro).__name__}: {erro}", flush=True)
-        raise ValueError("Não foi possível localizar esse endereço. Confira a rua, o número e o bairro.") from erro
-    _validar_coordenada(latitude, longitude)
-    return latitude, longitude
+        url = "https://api.geoapify.com/v1/geocode/search?" + urlencode(parametros)
+        requisicao = Request(url, headers={"Accept": "application/json"})
+        _ultima_geocodificacao = time.monotonic()
+        with urlopen(requisicao, timeout=10) as resposta:
+            dados = json.load(resposta)
+        resultados = dados["results"]
+        if not isinstance(resultados, list):
+            raise ValueError("Resposta inesperada do provedor.")
+    except HTTPError as erro:
+        # Não imprime a URL ou o corpo da resposta, para proteger a chave.
+        print(f"[GEOCODIFICACAO] Geoapify HTTP {erro.code}", flush=True)
+        raise ValueError("Serviço de localização indisponível. Tente novamente mais tarde.") from None
+    except (OSError, ValueError, KeyError, TypeError) as erro:
+        print(f"[GEOCODIFICACAO] Geoapify {type(erro).__name__}", flush=True)
+        raise ValueError("Serviço de localização indisponível. Tente novamente mais tarde.") from None
 
+    for resultado in resultados:
+        try:
+            # Não aceita o centro de uma cidade ou bairro como endereço preciso.
+            if resultado.get("result_type") in {
+                "country", "state", "county", "city", "district", "suburb",
+                "postcode", "municipality", "neighbourhood", "neighborhood",
+            }:
+                continue
+            latitude = float(resultado["lat"])
+            longitude = float(resultado["lon"])
+            _validar_coordenada(latitude, longitude)
+        except (KeyError, TypeError, ValueError, AttributeError):
+            continue
+        return latitude, longitude
+
+    raise ValueError("Não foi possível localizar esse endereço. Confira a rua, o número e o bairro.")
 
 def localizar_endereco(endereco):
     chave = _normalizar_endereco(endereco)
