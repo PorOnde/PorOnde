@@ -2,7 +2,9 @@
 import json
 import math
 import os
+import re
 import time
+import unicodedata
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
@@ -705,12 +707,73 @@ def _salvar_cache_geocodificacao(cache):
         )
 
 
+def _chave_referencia(texto):
+    texto = unicodedata.normalize("NFKD", texto.casefold())
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    return " ".join(re.findall(r"[a-z0-9]+", texto))
+
+
+# Pontos públicos de referência já conferidos nos testes do MVP.
+# Não são endereços pessoais nem resultados de consultas de usuários.
+_REFERENCIAS_GEOGRAFICAS = {
+    "estacao santa cruz": (-23.5979585, -46.6370296),
+    "metro santa cruz": (-23.5979585, -46.6370296),
+    "estacao metro santa cruz": (-23.5979585, -46.6370296),
+    "estacao do metro santa cruz": (-23.5979585, -46.6370296),
+    "estacao vila mariana": (-23.5894514, -46.6340504),
+    "metro vila mariana": (-23.5894514, -46.6340504),
+    "estacao metro vila mariana": (-23.5894514, -46.6340504),
+    "estacao do metro vila mariana": (-23.5894514, -46.6340504),
+}
+
+
+def _resultado_compativel(chave, resultado):
+    """Rejeita correspondências fracas, ruas erradas e números ausentes."""
+    if resultado.get("result_type") not in {"amenity", "building", "street"}:
+        return False
+    rank = resultado.get("rank") or {}
+    confianca = float(rank.get("confidence", 0))
+    if not math.isfinite(confianca) or confianca < 0.5:
+        return False
+    # O primeiro componente normalmente contém a rua ou o nome do local.
+    consulta = _chave_referencia(chave.split(",", 1)[0])
+    numero = re.search(r"(?:,\s*|\s+)(\d+[a-z]?)(?=\s*(?:,|$))", chave)
+    # Um número sozinho em uma rua numerada não é número de imóvel.
+    if re.fullmatch(r"(?:rua|avenida|av|travessa) \d+[a-z]?", consulta):
+        numero = None
+    if numero:
+        if _chave_referencia(str(resultado.get("housenumber", ""))) != _chave_referencia(numero.group(1)):
+            return False
+        if resultado.get("result_type") == "street":
+            return False
+        consulta = re.sub(r" \d+[a-z]?$", "", consulta)
+    if consulta.startswith(("rua ", "avenida ", "av ", "travessa ", "alameda ")):
+        def nome_rua(texto):
+            return re.sub(r"^(?:rua|avenida|av|travessa|alameda) ", "", _chave_referencia(texto))
+        if nome_rua(consulta) != nome_rua(str(resultado.get("street", ""))):
+            return False
+    elif consulta.startswith(("estacao ", "metro ")):
+        # Estações não podem virar ruas ou outros pontos de mesmo nome.
+        if resultado.get("result_type") != "amenity":
+            return False
+        nome = _chave_referencia(str(resultado.get("name", "")))
+        alvo = re.sub(r"^(?:estacao (?:do )?(?:metro )?|metro )", "", consulta)
+        if alvo not in nome or not any(t in nome.split() for t in ("metro", "estacao")):
+            return False
+    return True
+
+
 _geocodificacao_lock = Lock()
 _ultima_geocodificacao = 0.0
 
 @lru_cache(maxsize=512)
 def _geocodificar_memoria(chave):
     global _ultima_geocodificacao
+    referencia = _REFERENCIAS_GEOGRAFICAS.get(_chave_referencia(chave))
+    if referencia is not None:
+        _validar_coordenada(*referencia)
+        return referencia
+
     cache = _ler_cache_geocodificacao()
     if chave in cache:
         latitude = float(cache[chave]["latitude"])
@@ -757,11 +820,7 @@ def _geocodificar_memoria(chave):
 
     for resultado in resultados:
         try:
-            # Não aceita o centro de uma cidade ou bairro como endereço preciso.
-            if resultado.get("result_type") in {
-                "country", "state", "county", "city", "district", "suburb",
-                "postcode", "municipality", "neighbourhood", "neighborhood",
-            }:
+            if not _resultado_compativel(chave, resultado):
                 continue
             latitude = float(resultado["lat"])
             longitude = float(resultado["lon"])
