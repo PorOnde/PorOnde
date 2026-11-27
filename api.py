@@ -49,7 +49,7 @@ async def proteger_e_medir(request: Request, call_next):
     try:
         resposta = await call_next(request)
     except Exception as erro:
-        logger.error("Falha na API: %s", type(erro).__name__)
+        logger.exception("Falha na API")
         resposta = JSONResponse(status_code=500, content={"detail": "Não foi possível concluir a consulta."})
     if caminho == "/api/rotas":
         logger.info("Busca de rotas: %.2fs", time.monotonic() - inicio)
