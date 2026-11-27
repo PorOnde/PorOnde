@@ -732,7 +732,7 @@ def _geocodificar_memoria(chave):
             ox.settings.use_cache = cache_original
     except Exception as erro:
         print(f"[GEOCODIFICACAO] {type(erro).__name__}: {erro}", flush=True)
-    raise ValueError("Não foi possível localizar esse endereço. Confira a rua, o número e o bairro.") from erro
+        raise ValueError("Não foi possível localizar esse endereço. Confira a rua, o número e o bairro.") from erro
     _validar_coordenada(latitude, longitude)
     return latitude, longitude
 
