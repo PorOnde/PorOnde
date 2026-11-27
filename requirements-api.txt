@@ -1,0 +1,4 @@
+# Use the project's existing dependencies and add the HTTP server.
+-r requirements.txt
+fastapi
+uvicorn

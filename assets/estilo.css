@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+.stApp { font-family: Manrope, system-ui, sans-serif; }
+.stApp h1, .stApp h2, .stApp h3 { font-family: Manrope, system-ui, sans-serif; letter-spacing: -.034em; }
+.stApp h1 { font-size: clamp(1.75rem, 4vw, 2.6rem); font-weight: 600; line-height: 1.16; }
+.stApp h2 { font-size: 1.48rem; font-weight: 600; }
+.stApp h3 { font-size: 1.08rem; font-weight: 700; }
+.stApp p { line-height: 1.57; }
+.block-container { max-width: 1190px; padding-top: 2.1rem; padding-bottom: 2rem; }
+.st-key-cabecalho { padding-bottom: .75rem; border-bottom: 1px solid #dcded7; margin-bottom: 1rem; }
+.st-key-cabecalho [role="radiogroup"] { justify-content: flex-end; gap: .6rem 1.15rem; flex-wrap: wrap; }
+.st-key-cabecalho [role="radiogroup"] label { padding: .15rem 0; }
+.st-key-abertura { padding: 1rem 0 1.5rem; }
+.poronde-titulo span { display: inline-block; border: 1px solid #161a19; padding: .07em .25em; border-radius: .25em; margin: .10em .12em .10em 0; }
+.poronde-titulo .palavra-verde { background: #72d176; border-radius: 99px; }
+.stButton button, .stFormSubmitButton button { border-radius: 99px; font-weight: 700; }
+.st-key-cobertura { padding: .6rem 1rem; border: 1px solid #d7e6d6; border-radius: .65rem; background: #eef6ec; }
+@media (max-width: 640px) {
+  .block-container { padding-top: 1rem; }
+  .st-key-cabecalho [role="radiogroup"] { justify-content: flex-start; }
+  .st-key-abertura { padding: 0 0 .75rem; }
+}
+.st-key-cabecalho [role="radio"] { position: relative; }
+.st-key-cabecalho label:has(input:checked) { box-shadow: inset 0 -2px #197144; }
+.st-key-cabecalho label:has(input:focus-visible) { outline: 2px solid #197144; outline-offset: 3px; }
+
+[data-testid="stHeader"] {
+  display: none;
+}
+
+.stApp .block-container {
+  padding-top: 1.75rem;
+}
+
+.poronde-foto-reservada {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border: 1px dashed #424943;
+  border-radius: .75rem;
+  color: #515953;
+}
+
+.sobre-trecho-destaque {
+  padding: .04em .45em;
+  border: 1px solid #161a19;
+  border-radius: 99px;
+  background: #72d176;
+  white-space: nowrap;
+}
+
+.poronde-perfil-reservado {
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  border: 1px solid #bfc9c0;
+  border-radius: 50%;
+  background: #f0f4ef;
+}
+/* Pinos do menu superior */
+.st-key-cabecalho [data-testid="stRadioOption"] > div > div:first-child {
+  width: .85rem;
+  height: .85rem;
+  margin-inline: .1rem;
+  border: 1.5px solid #536b61;
+  border-radius: 50% 50% 50% 0;
+  background: radial-gradient(circle, #536b61 19%, transparent 23%);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.st-key-cabecalho [data-testid="stRadioOption"] > div > div:first-child > div {
+  display: none;
+}
+
+.st-key-cabecalho [data-testid="stRadioOption"]:has(input:checked) > div > div:first-child {
+  border-color: #197144;
+  background: radial-gradient(circle, #fff 21%, #197144 26%);
+}
+
+[data-testid="stHeaderActionElements"] a[aria-label="Link to heading"] {
+  display: none !important;
+}
+.stApp .block-container:has(.st-key-abertura) {
+  max-width: 1500px;
+  padding-inline: clamp(1rem, 3vw, 2.5rem);
+}
+
+.block-container:has(.st-key-abertura) :is(h1, h2, p, li) {
+  font-family: Manrope, system-ui, sans-serif;
+}
+
+.st-key-abertura .poronde-titulo {
+  font-size: clamp(2.25rem, 4vw, 3.75rem);
+  font-weight: 500;
+  line-height: 1.17;
+}
+
+.block-container:has(.st-key-abertura) h2 {
+  font-size: clamp(1.5rem, 2.3vw, 1.875rem);
+  font-weight: 500;
+}
+
+.poronde-passo img {
+  display: block;
+}
+
+.stApp .poronde-passo h3 {
+  font: 600 1rem / 1.4 Manrope, system-ui, sans-serif;
+  margin: .75rem 0 .2rem;
+  padding: 0;
+}
+
+.stApp .poronde-passo p {
+  font: 400 .9rem / 1.5 Manrope, system-ui, sans-serif;
+  color: #515953;
+  margin: 0;
+}
+
+/* Medidas da página inicial do Lovable */
+.stApp .block-container:has(.st-key-abertura) {
+  box-sizing: border-box;
+  max-width: 1152px;
+  padding-inline: 20px;
+}
+
+.stApp .st-key-abertura .poronde-titulo {
+  font: 500 40px / 1.25 Manrope, system-ui, sans-serif;
+  letter-spacing: -.025em;
+}
+
+@media (min-width: 768px) {
+  .stApp .st-key-abertura .poronde-titulo {
+    font-size: 48px;
+  }
+}
+
+.stApp .st-key-abertura p {
+  font: 400 16px / 24px Manrope, system-ui, sans-serif;
+}
+
+.stApp .block-container:has(.st-key-abertura) h2 {
+  font: 500 24px / 32px Manrope, system-ui, sans-serif;
+  letter-spacing: -.025em;
+}
+
+.stApp .poronde-passo img {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.stApp .poronde-passo h3 {
+  font: 600 16px / 24px Manrope, system-ui, sans-serif;
+  letter-spacing: normal;
+  margin: 16px 0 4px;
+  padding: 0;
+}
+
+.stApp .poronde-passo p {
+  font: 400 14px / 20px Manrope, system-ui, sans-serif;
+  margin: 0;
+}
+@media (min-width: 768px) {
+  .st-key-cabecalho [data-testid="stRadio"],
+  .st-key-cabecalho [data-testid="stRadioGroup"] {
+    width: 100%;
+  }
+
+  .st-key-cabecalho [data-testid="stRadioGroup"] {
+    justify-content: flex-end;
+  }
+}
+
+.stApp .poronde-passo img {
+  width: 32px !important;
+  height: 32px !important;
+}
+.stApp .st-key-cobertura {
+  padding: 3.5rem 0;
+  border: 0;
+  background: transparent;
+}
+
+.stApp .block-container .st-key-cobertura h2 {
+  margin: 0;
+  padding: 0;
+  font: 500 24px / 32px Manrope, system-ui, sans-serif;
+  letter-spacing: -.025em;
+}
+
+.stApp .st-key-cobertura p {
+  margin: .4rem 0 0;
+  color: #515953;
+  font: 400 16px / 24px Manrope, system-ui, sans-serif;
+}
+
+.stApp .st-key-cobertura button {
+  min-height: 44px;
+  padding: .65rem 1.5rem;
+  border: 1px solid #17191e;
+  border-radius: 999px;
+  background: #fbd530;
+  color: #17191e;
+  font: 600 14px / 20px Manrope, system-ui, sans-serif;
+}
+
+.stApp .st-key-cobertura button:hover {
+  border-color: #17191e;
+  background: #f1c623;
+  color: #17191e;
+}
+
+.stApp .st-key-rodape {
+  padding: 1.75rem 0 .5rem;
+  border-top: 1px solid #d8d7d4;
+}
+
+.stApp .st-key-rodape p {
+  margin: 0;
+  color: #515953;
+  font: 400 13px / 20px Manrope, system-ui, sans-serif;
+}
+
+@media (max-width: 640px) {
+  .stApp .st-key-cobertura {
+    padding: 2rem 0;
+  }
+}
+
+.stApp .st-key-perfis_equipe {
+  max-width: 880px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.stApp .st-key-perfis_equipe .poronde-perfil-reservado {
+  width: 96px;
+  height: 96px;
+}

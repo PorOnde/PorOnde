@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Dois caminhos para o mesmo destino">
+  <rect width="320" height="220" fill="#fcfbf8"/>
+  <path d="M0 40H320 M0 90H320 M0 140H320 M0 190H320 M60 0V220 M130 0V220 M200 0V220 M270 0V220" stroke="#e6e8e2" stroke-width="10" fill="none"/>
+  <path d="M60 190V40H270" stroke="#399e60" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M60 190H200V90H270V40" stroke="#c78d11" stroke-width="5" fill="none" stroke-dasharray="10 6" stroke-linecap="round"/>
+  <circle cx="60" cy="190" r="8" fill="#fff" stroke="#17191e" stroke-width="2"/>
+  <circle cx="270" cy="40" r="8" fill="#17191e"/>
+</svg>

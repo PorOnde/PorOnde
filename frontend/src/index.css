@@ -1,0 +1,951 @@
+@import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* Identidade visual do PorOnde? */
+@theme {
+  --color-marinho: #0A2940;
+  --color-verde: #48A85C;
+  --color-verde-escuro: #16834B;
+  --color-amarelo: #FFC107;
+  --color-vermelho: #EF4444;
+  --color-fundo: #F8F7F4;
+  --color-branco: #FFFFFF;
+}
+
+/* Configurações gerais da plataforma */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Plus Jakarta Sans Variable", Arial, sans-serif;
+  background-color: #F8F7F4;
+  color: #0A2940;
+}
+
+button {
+  cursor: pointer;
+}@import "tailwindcss";
+
+
+/* Animação dos trajetos da homepage */
+
+.trajeto-animado {
+  stroke-dasharray: 3 97;
+  stroke-dashoffset: 0;
+  animation: percorrer-trajeto 9s linear infinite;
+}
+
+.trajeto-animado-secundario {
+  animation-duration: 7s;
+  animation-delay: -3s;
+}
+
+@keyframes percorrer-trajeto {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+/* Respeita usuários que preferem reduzir animações */
+@media (prefers-reduced-motion: reduce) {
+  .trajeto-animado {
+    animation: none;
+    display: none;
+  }
+}
+
+/* ========================================
+   ANIMAÇÕES — COMO FUNCIONA
+======================================== */
+
+/* Entrada suave ao descer a página */
+.revelar {
+  opacity: 0;
+  transform: translateY(35px);
+}
+
+.secao-visivel .revelar {
+  animation: revelar-elemento 1000ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  animation-delay: var(--atraso, 0ms);
+}
+
+@keyframes revelar-elemento {
+  from {
+    opacity: 0;
+    transform: translateY(35px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sublinhado vermelho do título */
+.titulo-funciona::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -9px;
+  width: 100%;
+  height: 3px;
+  background: var(--color-vermelho);
+  border-radius: 50%;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.secao-visivel .titulo-funciona::after {
+  animation: desenhar-sublinhado 800ms ease 200ms both;
+}
+
+@keyframes desenhar-sublinhado {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Movimento suave dos quadrados dos ícones */
+.simbolo-funciona {
+  transition: transform 300ms ease;
+}
+
+.etapa-funciona:hover .simbolo-funciona {
+  transform: translateY(-5px);
+}
+
+/* Pino de localização */
+.etapa-funciona:hover .icone-localizacao {
+  animation: movimento-pino 600ms ease;
+}
+
+@keyframes movimento-pino {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Apenas o ponteiro do velocímetro se move */
+.ponteiro-pontuacao {
+  transform-box: view-box;
+  transform-origin: 24px 31px;
+  transition: transform 400ms ease;
+}
+
+.etapa-funciona:hover .ponteiro-pontuacao {
+  transform: rotate(-50deg);
+}
+
+/* Respeita a preferência por movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  .revelar,
+  .secao-visivel .revelar {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .titulo-funciona::after,
+  .secao-visivel .titulo-funciona::after {
+    transform: scaleX(1);
+    animation: none;
+  }
+
+  .simbolo-funciona,
+  .ponteiro-pontuacao {
+    transition: none;
+  }
+
+  .etapa-funciona:hover .simbolo-funciona,
+  .etapa-funciona:hover .ponteiro-pontuacao {
+    transform: none;
+  }
+
+  .etapa-funciona:hover .icone-localizacao {
+    animation: none;
+  }
+}
+
+/* ========================================
+   ANIMAÇÃO — MAPA ILUSTRATIVO
+======================================== */
+
+
+/* ========================================
+   ANIMAÇÕES — TRÊS TRAJETOS DO MAPA
+======================================== */
+
+.desenhar-rota {
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+}
+
+/* Primeiro trajeto */
+.secao-visivel .desenhar-rota-verde {
+  animation: desenhar-caminho 1.7s ease-in-out
+    250ms forwards;
+}
+
+/* Segundo trajeto */
+.secao-visivel .desenhar-rota-amarela {
+  animation: desenhar-caminho 1.8s ease-in-out
+    650ms forwards;
+}
+
+/* Terceiro trajeto */
+.secao-visivel .desenhar-rota-vermelha {
+  animation: desenhar-caminho 1.8s ease-in-out
+    1050ms forwards;
+}
+
+@keyframes desenhar-caminho {
+  from {
+    stroke-dashoffset: 100;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .desenhar-rota,
+  .secao-visivel .desenhar-rota-verde,
+  .secao-visivel .desenhar-rota-amarela,
+  .secao-visivel .desenhar-rota-vermelha {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ========================================
+   FOOTER — ONDAS ANIMADAS
+======================================== */
+
+.onda-footer-verde {
+  animation: movimento-onda-verde 12s ease-in-out infinite;
+}
+
+.onda-footer-marinho {
+  animation: movimento-onda-marinho 16s ease-in-out infinite;
+}
+
+@keyframes movimento-onda-verde {
+  0%, 100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(-35px);
+  }
+}
+
+@keyframes movimento-onda-marinho {
+  0%, 100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(30px);
+  }
+}
+
+/* Logo provisoriamente branca no rodapé */
+.logo-footer {
+  filter: brightness(0) invert(1);
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .onda-footer-verde,
+  .onda-footer-marinho {
+    animation: none;
+  }
+}
+
+/* ========================================
+   PÁGINA TRAJETO — TRANSIÇÃO DE ENTRADA
+======================================== */
+
+.entrada-pagina-trajeto {
+  animation: entrada-trajeto 750ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes entrada-trajeto {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Remove a seta padrão dos detalhes */
+.entrada-pagina-trajeto summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .entrada-pagina-trajeto {
+    animation: none;
+  }
+}
+/* ========================================
+   TRAJETO — ANIMAÇÕES DOS ELEMENTOS
+======================================== */
+
+.animar-entrada {
+  animation: surgir-trajeto 800ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  animation-delay: var(--atraso, 0ms);
+}
+
+@keyframes surgir-trajeto {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animação ao abrir os detalhamentos */
+.entrada-pagina-trajeto details[open] > div {
+  animation: abrir-detalhes 350ms ease-out both;
+}
+
+@keyframes abrir-detalhes {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .animar-entrada,
+  .entrada-pagina-trajeto details[open] > div {
+    animation: none;
+  }
+}
+.entrada-pagina-trajeto {
+  animation: none;
+}
+
+/* ========================================
+   RELATOS — ANIMAÇÃO DO FORMULÁRIO
+======================================== */
+
+.modal-relato[open] {
+  animation: abrir-modal-relato 350ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.modal-relato[open]::backdrop {
+  animation: fundo-modal-relato 300ms ease both;
+}
+
+@keyframes abrir-modal-relato {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fundo-modal-relato {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-relato[open],
+  .modal-relato[open]::backdrop {
+    animation: none;
+  }
+}
+
+/* ========================================
+   RELATOS — CAMPOS E SELEÇÃO NO MAPA
+======================================== */
+
+.animar-campo-relato {
+  animation: surgir-campo-relato 350ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes surgir-campo-relato {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Altera o cursor durante a seleção do local */
+.mapa-selecionando .leaflet-container {
+  cursor: crosshair;
+}
+
+/* Destaque visual durante a seleção */
+.mapa-selecionando {
+  outline: 2px solid #16834B;
+  outline-offset: 2px;
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .animar-campo-relato {
+    animation: none;
+  }
+}
+
+/* ========================================
+   SOBRE NÓS — ANIMAÇÕES
+======================================== */
+
+/* Entrada durante a rolagem */
+
+.sobre-pronto .sobre-revelar {
+  opacity: 0;
+  transform: translateY(35px);
+}
+
+.sobre-pronto .sobre-visivel .sobre-revelar {
+  animation: sobre-aparecer 900ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  animation-delay: var(--atraso-sobre, 0ms);
+}
+
+@keyframes sobre-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(35px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   MISSÃO, VISÃO E VALORES
+======================================== */
+
+.sobre-linha-pilar {
+  background-color: var(--cor-pilar);
+  transform-origin: left;
+}
+
+.sobre-visivel .sobre-linha-pilar {
+  animation: sobre-expandir-linha 1100ms
+    ease-out both;
+
+  animation-delay: var(--atraso-sobre, 0ms);
+}
+
+@keyframes sobre-expandir-linha {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.sobre-icone-pilar {
+  transition: transform 400ms ease;
+}
+
+.sobre-pilar:hover .sobre-icone-pilar {
+  transform: translateY(-6px) rotate(-8deg);
+}
+
+/* ========================================
+   EQUIPE
+======================================== */
+
+/* Zoom suave das fotografias */
+
+.sobre-foto {
+  transition: transform 650ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sobre-integrante:hover .sobre-foto {
+  transform: scale(1.07);
+}
+
+/* Linha colorida da fotografia */
+
+.sobre-linha-foto {
+  background-color: var(--cor-integrante);
+  transform-origin: left;
+}
+
+.sobre-visivel .sobre-linha-foto {
+  animation: sobre-expandir-linha 1000ms
+    ease-out both;
+
+  animation-delay: var(--atraso-sobre, 0ms);
+}
+
+/* Redes sociais */
+
+.sobre-social {
+  transition:
+    transform 250ms ease,
+    background-color 250ms ease,
+    color 250ms ease,
+    border-color 250ms ease;
+}
+
+.sobre-social:hover {
+  transform: translateY(-4px);
+}
+
+/* ========================================
+   TECNOLOGIAS
+======================================== */
+
+/* Fundo com linhas discretas */
+
+.sobre-grade-tecnologias {
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px
+    );
+
+  background-size: 42px 42px;
+}
+
+.sobre-tecnologia {
+  transition:
+    transform 350ms ease,
+    background-color 350ms ease,
+    border-color 350ms ease,
+    box-shadow 350ms ease;
+}
+
+.sobre-tecnologia:hover {
+  transform: translateY(-6px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(72, 168, 92, 0.65);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.sobre-icone-tecnologia {
+  transition: transform 400ms ease;
+}
+
+.sobre-tecnologia:hover .sobre-icone-tecnologia {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+/* ========================================
+   LOCALIZAÇÃO
+======================================== */
+
+.sobre-localizacao::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 1px solid rgba(22, 131, 75, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sobre-visivel .sobre-localizacao::before {
+  animation: sobre-onda-localizacao 2200ms
+    ease-out 2;
+}
+
+@keyframes sobre-onda-localizacao {
+  0% {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ========================================
+   PONTOS COLORIDOS DO ENCERRAMENTO
+======================================== */
+
+.sobre-visivel .sobre-ponto-final {
+  animation: sobre-salto-ponto 700ms
+    ease-in-out both;
+}
+
+@keyframes sobre-salto-ponto {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* ========================================
+   ACESSIBILIDADE
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sobre-pronto .sobre-revelar,
+  .sobre-pronto .sobre-visivel .sobre-revelar {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .sobre-visivel .sobre-linha-pilar,
+  .sobre-visivel .sobre-linha-foto,
+  .sobre-visivel .sobre-localizacao::before,
+  .sobre-visivel .sobre-ponto-final {
+    animation: none;
+  }
+
+  .sobre-foto,
+  .sobre-icone-pilar,
+  .sobre-social,
+  .sobre-tecnologia,
+  .sobre-icone-tecnologia {
+    transition: none;
+  }
+
+  .sobre-integrante:hover .sobre-foto,
+  .sobre-pilar:hover .sobre-icone-pilar,
+  .sobre-social:hover,
+  .sobre-tecnologia:hover,
+  .sobre-tecnologia:hover .sobre-icone-tecnologia {
+    transform: none;
+  }
+}
+
+/* ========================================
+   MISSÃO, VISÃO E VALORES — NOVO DESIGN
+======================================== */
+
+/* Linha que conecta os princípios */
+.mvv-linha-trajeto {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+.sobre-visivel .mvv-linha-trajeto {
+  animation: mvv-desenhar-linha 1.8s ease-in-out
+    200ms forwards;
+}
+
+@keyframes mvv-desenhar-linha {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Círculo externo */
+.mvv-circulo-externo {
+  background-color: color-mix(
+    in srgb,
+    var(--mvv-cor) 12%,
+    white
+  );
+
+  transition:
+    transform 450ms ease,
+    background-color 450ms ease;
+}
+
+/* Círculo interno */
+.mvv-circulo-interno {
+  border: 2px solid var(--mvv-cor);
+
+  transition:
+    transform 450ms ease,
+    box-shadow 450ms ease;
+}
+
+/* Entrada dos círculos */
+.sobre-visivel .mvv-circulo-externo {
+  animation: mvv-entrada-circulo 900ms
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  animation-delay: var(--atraso-sobre, 0ms);
+}
+
+@keyframes mvv-entrada-circulo {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Movimento ao passar o mouse */
+.mvv-item:hover .mvv-circulo-interno {
+  transform: scale(1.08);
+
+  box-shadow: 0 0 0 8px color-mix(
+    in srgb,
+    var(--mvv-cor) 10%,
+    transparent
+  );
+}
+
+.mvv-icone {
+  transition: transform 450ms ease;
+}
+
+.mvv-item:hover .mvv-icone {
+  transform: scale(1.12) rotate(-8deg);
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .sobre-visivel .mvv-linha-trajeto,
+  .sobre-visivel .mvv-circulo-externo {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: none;
+  }
+
+  .mvv-circulo-externo,
+  .mvv-circulo-interno,
+  .mvv-icone {
+    transition: none;
+  }
+
+  .mvv-item:hover .mvv-circulo-interno,
+  .mvv-item:hover .mvv-icone {
+    transform: none;
+  }
+}
+
+/* HOME — Animação do título principal */
+
+.hero-titulo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #0A2940;
+  font-size: clamp(2rem, 4.5vw, 4.8rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  text-align: center;
+}
+
+.hero-linha {
+  display: block;
+  animation: heroSubir 0.8s ease both;
+}
+
+.hero-linha-1 {
+  animation-delay: 0.15s;
+}
+
+.hero-linha-2 {
+  animation-delay: 0.45s;
+}
+
+.hero-destaque {
+  position: relative;
+  display: inline-block;
+  color: #EF4444;
+}
+
+/* Linha animada inspirada em um trajeto */
+
+
+@keyframes heroSubir {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroDesenharRota {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes heroPercorrerRota {
+  0% {
+    left: 0;
+    opacity: 1;
+    background: #48A85C;
+  }
+  50% {
+    background: #FFC107;
+  }
+  100% {
+    left: calc(100% - 10px);
+    opacity: 1;
+    background: #EF4444;
+  }
+}
+
+/* Acessibilidade */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-linha,
+  .hero-destaque::before,
+  .hero-destaque::after {
+    animation: none;
+  }
+
+  .hero-destaque::after {
+    transform: scaleX(1);
+  }
+}
+
+/* HOME — Animação do título principal */
+
+.hero-titulo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #0A2940;
+  font-size: clamp(2rem, 4.5vw, 4.8rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  text-align: center;
+}
+
+.hero-linha {
+  display: block;
+  animation: heroSubir 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.hero-linha-1 {
+  animation-delay: 0.1s;
+}
+
+.hero-linha-2 {
+  animation-delay: 0.35s;
+}
+
+.hero-destaque {
+  display: inline-block;
+
+  background: linear-gradient(
+    110deg,
+    #0A2940 10%,
+    #387BA0 35%,
+    #82B8CE 48%,
+    #216185 60%,
+    #0A2940 85%
+  );
+
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+
+  animation: heroBrilho 3s ease-in-out 0.9s both;
+}
+
+@keyframes heroSubir {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroBrilho {
+  from {
+    background-position: 100% 50%;
+  }
+
+  to {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-linha,
+  .hero-destaque {
+    animation: none;
+  }
+}

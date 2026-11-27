@@ -1,0 +1,115 @@
+{
+  "apoio": [
+    {
+      "nome": "Metrô (estações e acessos)",
+      "total": 33
+    },
+    {
+      "nome": "Mercados",
+      "total": 25
+    },
+    {
+      "nome": "Farmácias",
+      "total": 24
+    },
+    {
+      "nome": "Lojas",
+      "total": 22
+    },
+    {
+      "nome": "Postos de combustível",
+      "total": 21
+    },
+    {
+      "nome": "Hospitais",
+      "total": 18
+    },
+    {
+      "nome": "Clínicas",
+      "total": 15
+    },
+    {
+      "nome": "Delegacias",
+      "total": 4
+    },
+    {
+      "nome": "Outros",
+      "total": 1
+    }
+  ],
+  "fontes_apoio": [
+    {
+      "nome": "OpenStreetMap",
+      "total": 162
+    },
+    {
+      "nome": "Prefeitura de São Paulo",
+      "total": 1
+    }
+  ],
+  "ocorrencias": [
+    {
+      "nome": "Furto — outros",
+      "total": 1399
+    },
+    {
+      "nome": "Roubo — outros",
+      "total": 348
+    },
+    {
+      "nome": "Lesão corporal dolosa",
+      "total": 88
+    },
+    {
+      "nome": "Categorias combinadas",
+      "total": 4
+    }
+  ],
+  "mensal": [
+    {
+      "mes": "2026-07",
+      "categoria": "Furto — outros",
+      "total": 508
+    },
+    {
+      "mes": "2026-07",
+      "categoria": "Roubo — outros",
+      "total": 124
+    },
+    {
+      "mes": "2026-07",
+      "categoria": "Lesão corporal dolosa",
+      "total": 23
+    },
+    {
+      "mes": "2026-08",
+      "categoria": "Furto — outros",
+      "total": 508
+    },
+    {
+      "mes": "2026-08",
+      "categoria": "Roubo — outros",
+      "total": 114
+    },
+    {
+      "mes": "2026-08",
+      "categoria": "Lesão corporal dolosa",
+      "total": 35
+    },
+    {
+      "mes": "2026-09",
+      "categoria": "Furto — outros",
+      "total": 398
+    },
+    {
+      "mes": "2026-09",
+      "categoria": "Roubo — outros",
+      "total": 115
+    },
+    {
+      "mes": "2026-09",
+      "categoria": "Lesão corporal dolosa",
+      "total": 33
+    }
+  ]
+}

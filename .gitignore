@@ -1,0 +1,41 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Bancos de dados locais
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Credenciais privadas
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Cache
+cache/
+data/cache/
+
+# React e Vite
+node_modules/
+dist/
+dist-ssr/
+
+# Vercel
+.vercel/
+
+# Logs
+logs/
+*.log
+
+# Editor
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

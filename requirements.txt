@@ -1,0 +1,12 @@
+geopandas
+networkx
+osmnx
+pandas
+scikit-learn
+streamlit>=1.57,<2
+folium
+streamlit-folium
+Authlib==1.9.5
+httpx==0.28.1
+supabase==2.34.1
+
