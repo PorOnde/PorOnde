@@ -64,7 +64,7 @@ const equipe = [
     nome: 'Emilly Barauna',
     inicial: 'E',
     foto: 'emilly.jpg',
-    linkedin: 'www.linkedin.com/in/emilly-barauna',
+    linkedin: 'https://www.linkedin.com/in/emilly-barauna/',
     github: 'https://github.com/Emilly-Barauna',
     cor: '#48A85C',
   },
